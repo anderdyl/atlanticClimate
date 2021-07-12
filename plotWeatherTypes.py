@@ -111,11 +111,11 @@ class GPSDistance(Metric):
 
 #DWT = ReadMatfile('/media/dylananderson/Elements1/NC_climate/Nags_Head_DWTs_49_w20minDates_2degree_plus5TCs3dayafterentering2.mat')
 #DWT = ReadMatfile('/media/dylananderson/Elements1/NC_climate/Nags_Head_DWTS_25_w50minDates_plus5TCs_goodorder.mat')
-DWT = ReadMatfile('/media/dylananderson/Elements1/NC_climate/Nags_Head_DWTs_25_w50minDates_2degree_plus5TCs6daysAroundEntering.mat')
-PCAmat = ReadMatfile('/media/dylananderson/Elements1/NC_climate/Nags_Head_SLPs_2degree_memory_July2020.mat')
-SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021.mat')
+DWT = ReadMatfile('/media/dylananderson/Elements/NC_climate/Nags_Head_DWTs_25_w50minDates_2degree_plus5TCs6daysAroundEntering.mat')
+PCAmat = ReadMatfile('/media/dylananderson/Elements/NC_climate/Nags_Head_SLPs_2degree_memory_July2020.mat')
+SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021.mat')
 numDWTs = 30
-mycols = ReadMatfile('/media/dylananderson/Elements1/shusin6_contents/codes/mycmap_col.mat')
+mycols = ReadMatfile('/media/dylananderson/Elements/shusin6_contents/codes/mycmap_col.mat')
 mycmap = mycols['mycmap_col']
 # Need to get the dates for the bmus into the correct format (datetime)
 def datevec2datetime(d_vec):
