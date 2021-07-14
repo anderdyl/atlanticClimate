@@ -4,6 +4,9 @@
 *.tiff
 *.jpeg
 
+# any pickle data files
+*.pickle
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

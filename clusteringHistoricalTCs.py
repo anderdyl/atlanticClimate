@@ -784,12 +784,13 @@ cluster6PeakTimes = SLPtime[cluster6SLPIndex,:]
 
 fig3 = plt.figure()
 clevels = np.arange(-20,20,1)
-cx,cy =m(X_in,Y_in)  # convert to map projection coordinate
+ # convert to map projection coordinate
 # cx,cy =m(XR,YR)  # convert to map projection coordinate
 
 ax1 = plt.subplot2grid((2,3),(0,0),rowspan=1,colspan=1)
 m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=245,urcrnrlon=370,lat_ts=10,resolution='c')
 #m.fillcontinents(color=dwtcolors[qq])
+cx,cy =m(X_in,Y_in)
 m.drawcoastlines()
 CS = m.contourf(cx,cy,cluster1SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
 
@@ -817,6 +818,43 @@ ax6 = plt.subplot2grid((2,3),(1,2),rowspan=1,colspan=1)
 m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=245,urcrnrlon=370,lat_ts=10,resolution='c')
 m.drawcoastlines()
 CS = m.contourf(cx,cy,cluster6SLPs.T,clevels,vmin=-5,vmax=5,cmap=cm.RdBu_r,shading='gouraud')
+
+
+
+
+cluster1DateVectors = np.concatenate(cluster1Time)
+cluster2DateVectors = np.concatenate(cluster2Time)
+cluster3DateVectors = np.concatenate(cluster3Time)
+cluster4DateVectors = np.concatenate(cluster4Time)
+cluster5DateVectors = np.concatenate(cluster5Time)
+cluster6DateVectors = np.concatenate(cluster6Time)
+
+
+
+
+import pickle
+
+tcPickle = 'historicalTCs.pickle'
+outputTCs = {}
+outputTCs['c1times'] = cluster1DateVectors
+outputTCs['c2times'] = cluster2DateVectors
+outputTCs['c3times'] = cluster3DateVectors
+outputTCs['c4times'] = cluster4DateVectors
+outputTCs['c5times'] = cluster5DateVectors
+outputTCs['c6times'] = cluster6DateVectors
+outputTCs['c1minTimes'] = cluster1minTime
+outputTCs['c2minTimes'] = cluster2minTime
+outputTCs['c3minTimes'] = cluster3minTime
+outputTCs['c4minTimes'] = cluster4minTime
+outputTCs['c5minTimes'] = cluster5minTime
+outputTCs['c6minTimes'] = cluster6minTime
+
+with open(tcPickle,'wb') as f:
+    pickle.dump(outputTCs, f)
+
+
+
+
 
 
 
