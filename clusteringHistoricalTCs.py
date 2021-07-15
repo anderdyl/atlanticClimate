@@ -142,9 +142,19 @@ for hh in range(len(TCtime)):
         streamWind.append(TCwind[hh,indexReal[0]])
 
 metric = GPSDistance()
-qb = QuickBundles(threshold=2750,metric=metric)
+# qb = QuickBundles(threshold=2750,metric=metric)
+qb = QuickBundles(threshold=1900,metric=metric)
+
 clusters = qb.cluster(streams)
 print("Nb. clusters:",len(clusters))
+
+
+
+
+
+asdfg
+
+
 
 fig = plt.figure()
 #m = Basemap(projection='merc', llcrnrlat=0, urcrnrlat=60, llcrnrlon=250, urcrnrlon=-10, lat_ts=10,resolution='c')
@@ -152,8 +162,8 @@ fig = plt.figure()
 # #m.fillcontinents(color=dwtcolors[qq])
 plotIndy=0
 plotIndx=0
-for clustersIndex in range(6):
-    p1 = plt.subplot2grid((2, 3), (plotIndx, plotIndy), rowspan=1, colspan=1)
+for clustersIndex in range(14):
+    p1 = plt.subplot2grid((4, 4), (plotIndx, plotIndy), rowspan=1, colspan=1)
     m = Basemap(llcrnrlon=-120.7, llcrnrlat=0., urcrnrlon=-10.1, urcrnrlat=60, projection='merc', lat_1=30., lat_2=60.,
                 lat_0=34.83158, lon_0=-98.)
 
@@ -164,17 +174,18 @@ for clustersIndex in range(6):
         # cy = streams[i][:,0]
         m.plot(cx, cy, marker=None, color=color)
     m.drawcoastlines()
-    if plotIndy < 2:
+    if plotIndy < 3:
         plotIndy = plotIndy + 1
     else:
         plotIndy = 0
         plotIndx = plotIndx + 1
-for i in clusters[6].indices:
-    cx, cy = m(streams[i][:,1], streams[i][:,0])  # convert to map projection coordinate
-        # cx = streams[i][:,1]
-        # cy = streams[i][:,0]
-    m.plot(cx, cy, marker=None, color=color)
 
+# for i in clusters[6].indices:
+#     cx, cy = m(streams[i][:,1], streams[i][:,0])  # convert to map projection coordinate
+#         # cx = streams[i][:,1]
+#         # cy = streams[i][:,0]
+#     m.plot(cx, cy, marker=None, color=color)
+#
 
 
 
@@ -848,6 +859,12 @@ outputTCs['c3minTimes'] = cluster3minTime
 outputTCs['c4minTimes'] = cluster4minTime
 outputTCs['c5minTimes'] = cluster5minTime
 outputTCs['c6minTimes'] = cluster6minTime
+outputTCs['cluster1SLPs'] = cluster1SLPs
+outputTCs['cluster2SLPs'] = cluster2SLPs
+outputTCs['cluster3SLPs'] = cluster3SLPs
+outputTCs['cluster4SLPs'] = cluster4SLPs
+outputTCs['cluster5SLPs'] = cluster5SLPs
+outputTCs['cluster6SLPs'] = cluster6SLPs
 
 with open(tcPickle,'wb') as f:
     pickle.dump(outputTCs, f)

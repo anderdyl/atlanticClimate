@@ -35,8 +35,6 @@ def ReadMatfile(p_mfile):
 
 
 
-
-
 dataMJO = ReadMatfile('/media/dylananderson/Elements/SERDP/Data/MJO/mjo_australia_2021.mat')
 mjoPhase = dataMJO['phase']
 dt = datetime.date(1974, 6, 1)
@@ -46,6 +44,9 @@ mjoTime = []
 while dt < end:
     mjoTime.append(dt)#.strftime('%Y-%m-%d'))
     dt += step
+
+
+
 
 
 

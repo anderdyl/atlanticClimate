@@ -242,6 +242,13 @@ c4times = historicalTCs['c4times']
 c5times = historicalTCs['c5times']
 c6times = historicalTCs['c6times']
 
+cluster6SLPs = historicalTCs['cluster6SLPs']
+cluster5SLPs = historicalTCs['cluster5SLPs']
+cluster4SLPs = historicalTCs['cluster4SLPs']
+cluster3SLPs = historicalTCs['cluster3SLPs']
+cluster2SLPs = historicalTCs['cluster2SLPs']
+cluster1SLPs = historicalTCs['cluster1SLPs']
+
 allTCtimes1 = np.vstack((c1times,c2times))
 allTCtimes2 = np.vstack((allTCtimes1,c3times))
 allTCtimes3 = np.vstack((allTCtimes2,c4times))
@@ -260,7 +267,6 @@ overlap = [x for x in slpDates if x in tcDates]
 ind_dict = dict((k,i) for i,k in enumerate(slpDates))
 inter = set(slpDates).intersection(tcDates)
 indices = [ ind_dict[x] for x in inter ]
-#indices.append(int(11441))
 indices.sort()
 
 mask = np.ones(len(SLP), np.bool)
@@ -272,6 +278,34 @@ GRDless = np.delete(GRDless,(11440,11441,11442,11443),axis=0)
 Timeless = SLPtime[mask]
 Timeless = np.delete(SLPless,(11440,11441,11442,11443),axis=0)
 #SLPtest = SLP[indices,:]
+
+dfc1 = pd.DataFrame(np.asarray(dateDay2datetime(c1times)),columns=['date'])
+dropDupsC1 = dfc1.drop_duplicates('date')
+tcDatesC1 = dropDupsC1['date'].dt.date.tolist()
+dfc2 = pd.DataFrame(np.asarray(dateDay2datetime(c2times)),columns=['date'])
+dropDupsC2 = dfc2.drop_duplicates('date')
+tcDatesC2 = dropDupsC2['date'].dt.date.tolist()
+dfc3 = pd.DataFrame(np.asarray(dateDay2datetime(c3times)),columns=['date'])
+dropDupsC3 = dfc3.drop_duplicates('date')
+tcDatesC3 = dropDupsC3['date'].dt.date.tolist()
+dfc4 = pd.DataFrame(np.asarray(dateDay2datetime(c4times)),columns=['date'])
+dropDupsC4 = dfc4.drop_duplicates('date')
+tcDatesC4 = dropDupsC4['date'].dt.date.tolist()
+dfc5 = pd.DataFrame(np.asarray(dateDay2datetime(c5times)),columns=['date'])
+dropDupsC5 = dfc5.drop_duplicates('date')
+tcDatesC5 = dropDupsC5['date'].dt.date.tolist()
+dfc6 = pd.DataFrame(np.asarray(dateDay2datetime(c6times)),columns=['date'])
+dropDupsC6 = dfc6.drop_duplicates('date')
+tcDatesC6 = dropDupsC6['date'].dt.date.tolist()
+
+
+slpDates = dateDay2datetimeDate(SLPtime)
+overlap = [x for x in slpDates if x in tcDates]
+
+ind_dict = dict((k,i) for i,k in enumerate(slpDates))
+inter = set(slpDates).intersection(tcDates)
+indices = [ ind_dict[x] for x in inter ]
+indices.sort()
 
 # s = {d.date() for d in allTCtimes}
 # print(len(s))
@@ -412,15 +446,18 @@ Km_grd = Km_grd[:,0:len(X_B)]
 import matplotlib.cm as cm
 
 etcolors = cm.rainbow(np.linspace(0, 1,36))
-tccolors = np.flipud(cm.gray(np.linspace(0,1,6)))
+tccolors = np.flipud(cm.gray(np.linspace(0,1,7)))
 
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
-
+SLPs2 = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021.mat')
+# SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/Nags_Head_SLPs_2degree_memory_June2021.mat')
+X_in2 = SLPs2['X_in']
+Y_in2 = SLPs2['Y_in']
 
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,10))
-gs1 = gridspec.GridSpec(6, 6)
+gs1 = gridspec.GridSpec(7, 6)
 gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
 c1 = 0
 c2 = 0
@@ -431,32 +468,40 @@ for hh in range(36):
     #p1 = plt.subplot2grid((6,6),(c1,c2))
     ax = plt.subplot(gs1[hh])
 
-    num = kma_order[hh]
+    if hh <= 36:
+        num = kma_order[hh]
 
-    spatialField = Km_slp[(num - 1), :] / 100 - np.nanmean(SLP_C, axis=0) / 100
+        spatialField = Km_slp[(num - 1), :] / 100 - np.nanmean(SLP_C, axis=0) / 100
 
-    #spatialField = np.multiply(EOFs[hh,0:len(X_in)],np.sqrt(variance[hh]))
-    Xs = np.arange(np.min(X_in),np.max(X_in),2)
-    Ys = np.arange(np.min(Y_in),np.max(Y_in),2)
-    lenXB = len(X_in)
-    [XR,YR] = np.meshgrid(Xs,Ys)
-    sea_nodes = []
-    for qq in range(lenXB-1):
-        sea_nodes.append(np.where((XR == X_in[qq]) & (YR == Y_in[qq])))
+        #spatialField = np.multiply(EOFs[hh,0:len(X_in)],np.sqrt(variance[hh]))
+        Xs = np.arange(np.min(X_in),np.max(X_in),2)
+        Ys = np.arange(np.min(Y_in),np.max(Y_in),2)
+        lenXB = len(X_in)
+        [XR,YR] = np.meshgrid(Xs,Ys)
+        sea_nodes = []
+        for qq in range(lenXB-1):
+            sea_nodes.append(np.where((XR == X_in[qq]) & (YR == Y_in[qq])))
 
-    rectField = np.ones((np.shape(XR))) * np.nan
-    for tt in range(len(sea_nodes)):
-        rectField[sea_nodes[tt]] = spatialField[tt]
+        rectField = np.ones((np.shape(XR))) * np.nan
+        for tt in range(len(sea_nodes)):
+            rectField[sea_nodes[tt]] = spatialField[tt]
 
-    clevels = np.arange(-27,27,1)
-    m = Basemap(projection='merc',llcrnrlat=-40,urcrnrlat=50,llcrnrlon=275,urcrnrlon=370,lat_ts=10,resolution='c')
+        clevels = np.arange(-27,27,1)
+        m = Basemap(projection='merc',llcrnrlat=-32,urcrnrlat=48,llcrnrlon=275,urcrnrlon=370,lat_ts=10,resolution='c')
 
-    # m = Basemap(projection='merc',llcrnrlat=-40,urcrnrlat=55,llcrnrlon=255,urcrnrlon=375,lat_ts=10,resolution='c')
-    m.fillcontinents(color=dwtcolors[hh])
-    cx,cy =m(XR,YR)
-    m.drawcoastlines()
-    CS = m.contourf(cx,cy,rectField,clevels,vmin=-12,vmax=12,cmap=cm.RdBu_r,shading='gouraud')
-    #p1.set_title('EOF {} = {}%'.format(hh+1,np.round(nPercent[hh]*10000)/100))
+        # m = Basemap(projection='merc',llcrnrlat=-40,urcrnrlat=55,llcrnrlon=255,urcrnrlon=375,lat_ts=10,resolution='c')
+        m.fillcontinents(color=dwtcolors[hh])
+        cx,cy =m(XR,YR)
+        m.drawcoastlines()
+        CS = m.contourf(cx,cy,rectField,clevels,vmin=-12,vmax=12,cmap=cm.RdBu_r,shading='gouraud')
+        #p1.set_title('EOF {} = {}%'.format(hh+1,np.round(nPercent[hh]*10000)/100))
+        tx,ty = m(320,-30)
+        ax.text(tx,ty,'{}'.format(group_size[num]))
+
+    else:
+        num = hh
+
+
     c2 += 1
     if c2 == 6:
         c1 += 1
@@ -475,6 +520,61 @@ for hh in range(36):
         plotIndy = 0
         plotIndx = plotIndx + 1
 
+ax = plt.subplot(gs1[36])
+m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+m.fillcontinents(color=dwtcolors[36])
+cx,cy =m(X_in2,Y_in2)
+m.drawcoastlines()
+CS = m.contourf(cx,cy,cluster1SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+tx, ty = m(320, -0)
+ax.text(tx, ty, '{}'.format(len(c1times)))
+
+ax = plt.subplot(gs1[37])
+m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+m.fillcontinents(color=dwtcolors[37])
+cx,cy =m(X_in2,Y_in2)
+m.drawcoastlines()
+CS = m.contourf(cx,cy,cluster2SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+tx, ty = m(320, -0)
+ax.text(tx, ty, '{}'.format(len(c2times)))
+
+ax = plt.subplot(gs1[38])
+m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+m.fillcontinents(color=dwtcolors[38])
+cx,cy =m(X_in2,Y_in2)
+m.drawcoastlines()
+CS = m.contourf(cx,cy,cluster3SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+tx, ty = m(320, -0)
+ax.text(tx, ty, '{}'.format(len(c3times)))
+
+ax = plt.subplot(gs1[39])
+m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+m.fillcontinents(color=dwtcolors[39])
+cx,cy =m(X_in2,Y_in2)
+m.drawcoastlines()
+CS = m.contourf(cx,cy,cluster4SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+tx, ty = m(320, -0)
+ax.text(tx, ty, '{}'.format(len(c4times)))
+
+ax = plt.subplot(gs1[40])
+m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+m.fillcontinents(color=dwtcolors[40])
+cx,cy =m(X_in2,Y_in2)
+m.drawcoastlines()
+CS = m.contourf(cx,cy,cluster5SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+tx, ty = m(320, -0)
+ax.text(tx, ty, '{}'.format(len(c5times)))
+
+ax = plt.subplot(gs1[41])
+m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+m.fillcontinents(color=dwtcolors[41])
+cx,cy =m(X_in2,Y_in2)
+m.drawcoastlines()
+CS = m.contourf(cx,cy,cluster6SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+tx, ty = m(320, -0)
+ax.text(tx, ty, '{}'.format(len(c6times)))
+
+
 colormap = cm.RdBu_r
 normalize = mcolors.Normalize(vmin=-12, vmax=12)
 
@@ -486,6 +586,11 @@ cbar2 = fig2.colorbar(s_map2, cax=cbar_ax2)
 cbar2.set_label('slp anom (mbar)')
 
 plt.show()
+
+
+
+
+
 
 
 
