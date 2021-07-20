@@ -230,6 +230,9 @@ for qq in range(lenXB-1):
 
 
 
+order = [10,5,0,4,2,9,6,7,1,11,8,3]
+#order = [0,1,2,3,4,5,6,7,8,9,10,11]
+kma_order = [7,11,10,6,8,4,3,2,5,9,0,1]
 
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,5))
@@ -243,8 +246,8 @@ plotIndy = 0
 for hh in range(12):
     ax = plt.subplot(gs1[hh])
     clevels = np.arange(-27, 27, 1)
-
-    spatialField = Km_slp[(hh - 1), :] / 100 - np.nanmean(SLPtcs, axis=0) / 100
+    num = order[hh]
+    spatialField = Km_slp[(num - 1), :] / 100 - np.nanmean(SLPtcs, axis=0) / 100
     rectField = spatialField.reshape(63, 32)
 
    # cluster2SLPs = np.nanmean(SLP[cluster2SLPIndex, :], axis=0).reshape(73, 43) / 100 - np.nanmean(SLP, axis=0).reshape(73, 43) / 100
@@ -254,11 +257,83 @@ for hh in range(12):
     # #temp = spatialField.flatten()
     # for tt in range(len(sea_nodes)):
     #     rectField[sea_nodes[tt]] = spatialField[tt]
-    m = Basemap(projection='merc', llcrnrlat=-10, urcrnrlat=70, llcrnrlon=255, urcrnrlon=365, lat_ts=10, resolution='c')
+    m = Basemap(projection='merc', llcrnrlat=-5, urcrnrlat=55, llcrnrlon=255, urcrnrlon=360, lat_ts=10, resolution='c')
     #m.fillcontinents(color=dwtcolors[36])
     cx, cy = m(X_in, Y_in)
     m.drawcoastlines()
     CS = m.contourf(cx, cy, rectField.T, clevels, vmin=-12, vmax=12, cmap=cm.RdBu_r, shading='gouraud')
     tx, ty = m(320, -0)
-    ax.text(tx, ty, '{}'.format((group_size[hh])))
+    ax.text(tx, ty, '{}'.format((group_size[num])))
+
+
+
+
+
+
+
+
+
+import pickle
+
+dwtPickle = 'dwtsOfExtraTropicalDays.pickle'
+outputDWTs = {}
+outputDWTs['APEV'] = APEV
+outputDWTs['EOFs'] = EOFs
+outputDWTs['EOFsub'] = EOFsub
+#outputDWTs['GRD'] = GRD
+#outputDWTs['GRDless'] = GRDless
+#outputDWTs['Km_'] = Km_
+#outputDWTs['Km_grd'] = Km_grd
+outputDWTs['Km_slp'] = Km_slp
+outputDWTs['PCA'] = PCA
+outputDWTs['PCs'] = PCs
+outputDWTs['PCsub'] = PCsub
+outputDWTs['SLP'] = SLP
+#outputDWTs['SLP_C'] = SLP_C
+#outputDWTs['SLPless'] = SLPless
+##outputDWTs['SLPs'] = SLPs
+outputDWTs['SLPtime'] = SLPtime
+outputDWTs['SlpGrd'] = SlpGrd
+outputDWTs['SlpGrdMean'] = SlpGrdMean
+outputDWTs['SlpGrdStd'] = SlpGrdStd
+#outputDWTs['Timeless'] = Timeless
+outputDWTs['XR'] = XR
+#outputDWTs['X_B'] = X_B
+outputDWTs['X_in'] = X_in
+outputDWTs['XS'] = Xs
+outputDWTs['YR'] = YR
+#outputDWTs['Y_B'] = Y_B
+outputDWTs['Y_in'] = Y_in
+outputDWTs['YS'] = Ys
+outputDWTs['allTCtimes'] = allTCtimes
+#outputDWTs['bmus_corrected'] = bmus_corrected
+outputDWTs['centroids'] = centroids
+outputDWTs['d_groups'] = d_groups
+outputDWTs['group_size'] = group_size
+outputDWTs['ipca'] = ipca
+outputDWTs['km'] = km
+outputDWTs['kma'] = kma
+outputDWTs['kma_order'] = kma_order
+#outputDWTs['mask'] = mask
+outputDWTs['nPercent'] = nPercent
+outputDWTs['nterm'] = nterm
+outputDWTs['num_clusters'] = num_clusters
+outputDWTs['sea_nodes'] = sea_nodes
+outputDWTs['slpDates'] = slpDates
+#outputDWTs['sorted_cenEOFs'] = sorted_cenEOFs
+#outputDWTs['sorted_centroids'] = sorted_centroids
+outputDWTs['tcDates'] = tcDates
+outputDWTs['variance'] = variance
+
+with open(dwtPickle,'wb') as f:
+    pickle.dump(outputDWTs, f)
+
+
+
+
+
+
+
+
+
 
