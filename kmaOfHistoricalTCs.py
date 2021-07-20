@@ -244,7 +244,6 @@ sorted_centroids = centroids[kma_order, :]
 repmatDesviacion = np.tile(SlpGrdStd, (12,1))
 repmatMedia = np.tile(SlpGrdMean, (12,1))
 Km_slp = np.multiply(centroids,repmatDesviacion) + repmatMedia
-
 Xs = np.arange(np.min(X_in),np.max(X_in),2)
 Ys = np.arange(np.min(Y_in),np.max(Y_in),2)
 lenXB = len(X_in)
@@ -252,7 +251,6 @@ lenXB = len(X_in)
 sea_nodes = []
 for qq in range(lenXB-1):
     sea_nodes.append(np.where((XR == X_in[qq]) & (YR == Y_in[qq])))
-
 
 
 

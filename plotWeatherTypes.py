@@ -110,24 +110,6 @@ class GPSDistance(Metric):
         return currD
 
 
-import pickle
-
-with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
-   historicalDWTs = pickle.load(input_file)
-
-timeDWTs = historicalDWTs['SLPtime']
-# outputDWTs['slpDates'] = slpDates
-dwtBmus = historicalDWTs['bmus_corrected']
-
-
-with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
-   historicalTWTs = pickle.load(input_file)
-#timeTCs = historicalTWTs['tcDates']
-twtBmus = historicalTWTs['bmus_corrected']
-twtOrder = historicalTWTs['kma_order']
-tcIndices = historicalTWTs['tcIndices']
-TIMEtcs = historicalTWTs['TIMEtcs']
-
 
 
 
@@ -139,7 +121,7 @@ PCAmat = ReadMatfile('/media/dylananderson/Elements/NC_climate/Nags_Head_SLPs_2d
 SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021.mat')
 
 
-numDWTs = 48
+numDWTs = 30
 mycols = ReadMatfile('/media/dylananderson/Elements/shusin6_contents/codes/mycmap_col.mat')
 mycmap = mycols['mycmap_col']
 # Need to get the dates for the bmus into the correct format (datetime)
@@ -157,17 +139,17 @@ order = DWT['DWT']['order']
 
 import matplotlib.cm as cm
 
-# etcolors = cm.rainbow(np.linspace(0, 1, numDWTs-5))
-# tccolors = np.flipud(cm.gray(np.linspace(0,1,6)))
-#
-# dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
-
-
-etcolors = cm.viridis(np.linspace(0, 1, 48-11))
-tccolors = np.flipud(cm.autumn(np.linspace(0,1,12)))
+etcolors = cm.rainbow(np.linspace(0, 1, numDWTs-5))
+tccolors = np.flipud(cm.gray(np.linspace(0,1,6)))
 
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
+
+# etcolors = cm.viridis(np.linspace(0, 1, 48-11))
+# tccolors = np.flipud(cm.autumn(np.linspace(0,1,12)))
+#
+# dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
+#
 
 
 
