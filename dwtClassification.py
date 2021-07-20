@@ -273,10 +273,14 @@ mask = np.ones(len(SLP), np.bool)
 mask[indices] = 0
 SLPless = SLP[mask,:]
 GRDless = GRD[mask,:]
+
+# ugh this was stupid, this rogue TC should be handled differently
+# these are 4 days AFTER TCs have been removed that need to be added back.
+# and they are indices in a time series with no January 1979.
 SLPless = np.delete(SLPless,(11440,11441,11442,11443),axis=0)
 GRDless = np.delete(GRDless,(11440,11441,11442,11443),axis=0)
 Timeless = SLPtime[mask]
-Timeless = np.delete(SLPless,(11440,11441,11442,11443),axis=0)
+Timeless = np.delete(Timeless,(11440,11441,11442,11443),axis=0)
 #SLPtest = SLP[indices,:]
 
 dfc1 = pd.DataFrame(np.asarray(dateDay2datetime(c1times)),columns=['date'])

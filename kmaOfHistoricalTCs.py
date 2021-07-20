@@ -159,9 +159,29 @@ overlap = [x for x in slpDates if x in tcDates]
 ind_dict = dict((k,i) for i,k in enumerate(slpDates))
 inter = set(slpDates).intersection(tcDates)
 indices = [ ind_dict[x] for x in inter ]
+
+# ugh this was stupid, this rogue TC should be handled differently
+# these are 4 days AFTER TCs have been removed that need to be added back.
+# and they are indices in a time series with no January 1979.
+# SLPless = np.delete(SLPless,(11440,11441,11442,11443),axis=0)
+
+# which means they need to be ADDED to the "indices" vector here
+# but need to have 31 added for the length of January?
+
+indices.append(int(11440+31))
+indices.append(int(11441+31))
+indices.append(int(11442+31))
+indices.append(int(11443+31))
+
+# mask = np.ones(len(SLP), np.bool)
+# mask[indices] = 0
+# SLPless = SLP[mask,:]
+
 indices.sort()
 
 SLPtcs = SLP[indices,:]
+TIMEtcs = SLPtime[indices,:]
+
 
 
 SlpGrd = SLPtcs#np.hstack((SLPless,GRDless))
@@ -198,20 +218,25 @@ km = np.multiply(
     np.tile(SlpGrdStd, (num_clusters, 1))
 ) + np.tile(SlpGrdMean, (num_clusters, 1))
 
+
+#order = [10,5,0,4,2,9,6,7,1,11,8,3]
+#kma_order = [0,1,2,3,4,5,6,7,8,9,10,11]
+#kma_order = [7,11,10,6,8,4,3,2,5,9,0,1]
+kma_order = [9,8,2,1,7,4,10,11,3,6,0,5]
 # # sort kmeans
 # kma_order = np.argsort(np.mean(-km, axis=1))
 
 # # sort kmeans
 # kma_order = sort_cluster_gen_corr_end(kma.cluster_centers_, num_clusters)
-#
-# bmus_corrected = np.zeros((len(kma.labels_),), ) * np.nan
-# for i in range(num_clusters):
-#     posc = np.where(kma.labels_ == kma_order[i])
-#     bmus_corrected[posc] = i
-#
-# # reorder centroids
-# sorted_cenEOFs = kma.cluster_centers_[kma_order, :]
-# sorted_centroids = centroids[kma_order, :]
+
+bmus_corrected = np.zeros((len(kma.labels_),), ) * np.nan
+for i in range(num_clusters):
+    posc = np.where(kma.labels_ == kma_order[i])
+    bmus_corrected[posc] = i
+
+# reorder centroids
+sorted_cenEOFs = kma.cluster_centers_[kma_order, :]
+sorted_centroids = centroids[kma_order, :]
 
 
 
@@ -230,9 +255,6 @@ for qq in range(lenXB-1):
 
 
 
-order = [10,5,0,4,2,9,6,7,1,11,8,3]
-#order = [0,1,2,3,4,5,6,7,8,9,10,11]
-kma_order = [7,11,10,6,8,4,3,2,5,9,0,1]
 
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,5))
@@ -246,7 +268,7 @@ plotIndy = 0
 for hh in range(12):
     ax = plt.subplot(gs1[hh])
     clevels = np.arange(-27, 27, 1)
-    num = order[hh]
+    num = kma_order[hh]
     spatialField = Km_slp[(num - 1), :] / 100 - np.nanmean(SLPtcs, axis=0) / 100
     rectField = spatialField.reshape(63, 32)
 
@@ -277,6 +299,8 @@ import pickle
 
 dwtPickle = 'dwtsOfExtraTropicalDays.pickle'
 outputDWTs = {}
+outputDWTs['SLPtcs'] = SLPtcs
+outputDWTs['TIMEtcs'] = TIMEtcs
 outputDWTs['APEV'] = APEV
 outputDWTs['EOFs'] = EOFs
 outputDWTs['EOFsub'] = EOFsub
@@ -306,7 +330,7 @@ outputDWTs['YR'] = YR
 outputDWTs['Y_in'] = Y_in
 outputDWTs['YS'] = Ys
 outputDWTs['allTCtimes'] = allTCtimes
-#outputDWTs['bmus_corrected'] = bmus_corrected
+outputDWTs['bmus_corrected'] = bmus_corrected
 outputDWTs['centroids'] = centroids
 outputDWTs['d_groups'] = d_groups
 outputDWTs['group_size'] = group_size
@@ -320,10 +344,11 @@ outputDWTs['nterm'] = nterm
 outputDWTs['num_clusters'] = num_clusters
 outputDWTs['sea_nodes'] = sea_nodes
 outputDWTs['slpDates'] = slpDates
-#outputDWTs['sorted_cenEOFs'] = sorted_cenEOFs
-#outputDWTs['sorted_centroids'] = sorted_centroids
+outputDWTs['sorted_cenEOFs'] = sorted_cenEOFs
+outputDWTs['sorted_centroids'] = sorted_centroids
 outputDWTs['tcDates'] = tcDates
 outputDWTs['variance'] = variance
+outputDWTs['tcIndices'] = indices
 
 with open(dwtPickle,'wb') as f:
     pickle.dump(outputDWTs, f)
