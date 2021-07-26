@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
+from matplotlib import gridspec
 
 # # import constants
 # from .config import _faspect, _fsize, _fdpi
@@ -124,6 +125,16 @@ while dt < end:
 
 
 
+index = np.where((np.asarray(mjoTime) >= datetime.date(1979,2,1)) & (np.asarray(mjoTime) < datetime.date(2021,6,1)))
+
+mjoRmm1 = mjoRmm1[index]
+mjoRmm2 = mjoRmm2[index]
+mjoPhase = mjoPhase[index]
+#mjoTime = mjoTime[index]
+
+
+
+
 
 def MJO_Categories(rmm1, rmm2, phase):
     '''
@@ -212,12 +223,14 @@ def Plot_MJO_phases(rmm1, rmm2, phase, show=True):
 
 #xds = xr.open_dataset(self.paths.site.MJO.hist)
 
+
+
 mjoBmus, mjoGroups = MJO_Categories(mjoRmm1,mjoRmm2,mjoPhase)
 
 rm1 = pd.DataFrame(mjoRmm1)
 rm2 = pd.DataFrame(mjoRmm2)
 ph = pd.DataFrame(mjoPhase)
-bmus = pd.DataFrame(mjoBmus)
+bmusMJO = pd.DataFrame(mjoBmus)
 axMJO = Plot_MJO_phases(rm1,rm2,ph)
 
 
@@ -348,8 +361,121 @@ def Plot_MJO_Categories(rmm1, rmm2, categ, show=True):
     return fig
 
 
-axMJO2 = Plot_MJO_Categories(rm1,rm2,bmus)
+axMJO2 = Plot_MJO_Categories(rm1,rm2,bmusMJO)
+
+
+def ClusterProbabilities(series, set_values):
+    'return series probabilities for each item at set_values'
+
+    us, cs = np.unique(series, return_counts=True)
+    d_count = dict(zip(us,cs))
+
+    # cluster probabilities
+    cprobs = np.zeros((len(set_values)))
+    for i, c in enumerate(set_values):
+       cprobs[i] = 1.0*d_count[c]/len(series) if c in d_count.keys() else 0.0
+
+    return cprobs
 
 
 
+def axplot_WT_Probs(ax, wt_probs,
+                     ttl = '', vmin = 0, vmax = 0.1,
+                     cmap = 'Blues', caxis='black'):
+    'axes plot WT cluster probabilities'
 
+    # clsuter transition plot
+    pc = ax.pcolor(
+        np.flipud(wt_probs),
+        cmap=cmap, vmin=vmin, vmax=vmax,
+        edgecolors='k',
+    )
+
+    # customize axes
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title(ttl, {'fontsize':10, 'fontweight':'bold'})
+
+    # axis color
+    plt.setp(ax.spines.values(), color=caxis)
+    plt.setp(
+        [ax.get_xticklines(), ax.get_yticklines()],
+        color=caxis,
+    )
+
+    # axis linewidth
+    if caxis != 'black':
+        plt.setp(ax.spines.values(), linewidth=3)
+
+    return pc
+
+fig10 = plt.figure()
+
+gs = gridspec.GridSpec(5, 5, wspace=0.10, hspace=0.15)
+
+for ic in range(25):
+    ax = plt.subplot(gs[ic])
+
+    # select DWT bmus at current AWT indexes
+    index_1 = np.where(mjoBmus == ic+1)[0][:]
+    sel_2 = bmus[index_1]
+    set_2 = np.arange(48)
+    # get DWT cluster probabilities
+    cps = ClusterProbabilities(sel_2, set_2)
+    C_T = np.reshape(cps, (8, 6))
+
+    # # axis colors
+    # if wt_colors:
+    #     caxis = cs_wt[ic]
+    # else:
+    caxis = 'black'
+
+    # plot axes
+    ax = plt.subplot(gs[ic])
+    axplot_WT_Probs(
+        ax, C_T,
+        ttl='WT {0}'.format(ic + 1),
+        cmap='Reds', caxis=caxis,
+    )
+    ax.set_aspect('equal')
+
+
+
+rmm = np.sqrt(mjoRmm1**2 + mjoRmm2**2)
+
+bigInd = np.where((rmm > 1))
+mjoRmm1Big = mjoRmm1[bigInd]
+mjoRmm2Big = mjoRmm2[bigInd]
+mjoPhaseBig = mjoPhase[bigInd]
+bmusBig = bmus[bigInd]
+
+
+fig10 = plt.figure()
+
+gs = gridspec.GridSpec(1, 8, wspace=0.10, hspace=0.15)
+
+for ic in range(8):
+    ax = plt.subplot(gs[ic])
+
+    # select DWT bmus at current AWT indexes
+    index_1 = np.where(mjoPhaseBig == ic+1)[0][:]
+    sel_2 = bmusBig[index_1]
+    set_2 = np.arange(48)
+    # get DWT cluster probabilities
+    cps = ClusterProbabilities(sel_2, set_2)
+    C_T = np.reshape(cps, (8, 6))
+
+    # # axis colors
+    # if wt_colors:
+    #     caxis = cs_wt[ic]
+    # else:
+    caxis = 'black'
+
+    # plot axes
+    ax = plt.subplot(gs[ic])
+    axplot_WT_Probs(
+        ax, C_T,
+        ttl='WT {0}'.format(ic + 1),
+        cmap='Reds', caxis=caxis,
+    )
+    ax.set_aspect('equal')
