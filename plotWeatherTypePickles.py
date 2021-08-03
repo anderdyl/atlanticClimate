@@ -88,7 +88,8 @@ for hh in range(48):
     if hh <= 35:
         num = kma_orderET[hh]
 
-        spatialField = Km_slpET[(num - 1), :] / 100 - np.nanmean(SLPET, axis=0) / 100
+        #spatialField = Km_slpET[(num - 1), :] / 100 - np.nanmean(SLPET, axis=0) / 100
+        spatialField = Km_slpET[(hh), :] / 100 - np.nanmean(SLPET, axis=0) / 100
 
         #spatialField = np.multiply(EOFs[hh,0:len(X_in)],np.sqrt(variance[hh]))
         Xs = np.arange(np.min(X_inET),np.max(X_inET),2)
@@ -118,7 +119,9 @@ for hh in range(48):
     else:
         clevels = np.arange(-27, 27, 1)
         num = kma_orderTC[hh-36]
-        spatialField = Km_slpTC[(num - 1), :] / 100 - np.nanmean(SLPTC, axis=0) / 100
+        #spatialField = Km_slpTC[(num - 1), :] / 100 - np.nanmean(SLPTC, axis=0) / 100
+        spatialField = Km_slpTC[(hh-36), :] / 100 - np.nanmean(SLPTC, axis=0) / 100
+
         rectField = spatialField.reshape(63, 32)
 
         # cluster2SLPs = np.nanmean(SLP[cluster2SLPIndex, :], axis=0).reshape(73, 43) / 100 - np.nanmean(SLP, axis=0).reshape(73, 43) / 100
