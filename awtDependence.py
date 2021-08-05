@@ -201,25 +201,4 @@ for ic in range(6):
 
 
 
-#
-# # generate perpetual year list
-# list_pyear = GenOneYearDaily(month_ini=6)
-# m_plot = np.zeros((48, len(list_pyear))) * np.nan
-# num_clusters=48
-# num_sim=1
-# # sort data
-# for i, dpy in enumerate(list_pyear):
-#    _, s = np.where(
-#       [(bmus_dates_months == dpy.month) & (bmus_dates_days == dpy.day)]
-#    )
-#    #b = bmus_values[s, :]
-#    b = bmus[s]
-#    b = b.flatten()
-#
-#    for j in range(num_clusters):
-#       _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
-#
-#       m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
-#
-
 
