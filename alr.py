@@ -34,10 +34,9 @@ stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 from aux_nc import StoreBugXdset
 from time_operations import npdt64todatetime as npdt2dt
 #from .kma import Persistences
-# from .plotting.alr import Plot_PValues, Plot_Params, Plot_Terms
-# from .plotting.wts import Plot_Compare_PerpYear, Plot_Compare_Transitions, Plot_Compare_Persistences
-# from .plotting.alr import Plot_Compare_Covariate
-# from .plotting.alr import Plot_Log_Sim
+from alrPlotting import Plot_PValues, Plot_Params, Plot_Terms, Plot_Compare_Covariate, Plot_Log_Sim
+from wtsPlotting import Plot_Compare_PerpYear, Plot_Compare_Transitions, Plot_Compare_Persistences
+
 
 def Persistences(series):
     'Return series persistences for each element'
@@ -270,7 +269,7 @@ class ALR_WRP(object):
             for i in range(mk_order):
                 Z = np.zeros((bmus.size, cluster_size-1))
                 for indz in range(bmus.size-i-1):
-                    Z[indz+i+1,:] = np.squeeze(dum[bmus[indz]-1,:])
+                    Z[indz+i+1,:] = np.squeeze(dum[int(bmus[indz]-1),:])
 
                 terms['markov_{0}'.format(i+1)] = Z
 

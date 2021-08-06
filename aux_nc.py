@@ -11,7 +11,7 @@ import netCDF4
 import numpy as np
 
 # tk
-from ..util.time_operations import npdt64todatetime as n2d
+from time_operations import npdt64todatetime as n2d
 
 
 # TODO REFACTOR CON teslakit/database.py
