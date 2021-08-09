@@ -252,7 +252,7 @@ d_terms_settings = {
     'mk_order'  : 1,
     'constant' : True,
     'long_term' : False,
-    'seasonality': (True, [2, 4]),
+    'seasonality': (True, [2, 4, 6]),
     'covariates': (True, xds_cov_fit),
 }
 
@@ -304,3 +304,81 @@ with h5py.File(p_mat_output, 'w') as hf:
         ([d.year for d in dates_sim],
         [d.month for d in dates_sim],
         [d.day for d in dates_sim])).T
+
+
+
+
+
+def GenOneYearDaily(yy=1981, month_ini=1):
+   'returns one generic year in a list of datetimes. Daily resolution'
+
+   dp1 = datetime(yy, month_ini, 1)
+   dp2 = dp1 + timedelta(days=365)
+
+   return [dp1 + timedelta(days=i) for i in range((dp2 - dp1).days)]
+
+import matplotlib.pyplot as plt
+
+bmus_dates_months = np.array([d.month for d in dates_sim])
+bmus_dates_days = np.array([d.day for d in dates_sim])
+
+
+# generate perpetual year list
+list_pyear = GenOneYearDaily(month_ini=6)
+m_plot = np.zeros((48, len(list_pyear))) * np.nan
+num_clusters=48
+num_sim=1
+# sort data
+for i, dpy in enumerate(list_pyear):
+   _, s = np.where(
+      [(bmus_dates_months == dpy.month) & (bmus_dates_days == dpy.day)]
+   )
+   b = evbmus_sim[s,:]
+   # b = bmus[s]
+   b = b.flatten()
+
+   for j in range(num_clusters):
+      _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
+
+      m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
+
+import matplotlib.cm as cm
+etcolors = cm.viridis(np.linspace(0, 1, 48-11))
+tccolors = np.flipud(cm.autumn(np.linspace(0,1,12)))
+dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
+
+fig = plt.figure()
+ax = plt.subplot2grid((1,1),(0,0))
+# plot stacked bars
+bottom_val = np.zeros(m_plot[1, :].shape)
+for r in range(num_clusters):
+   row_val = m_plot[r, :]
+   ax.bar(
+      list_pyear, row_val, bottom=bottom_val,
+      width=1, color=np.array([dwtcolors[r]])
+   )
+
+   # store bottom
+   bottom_val += row_val
+
+import matplotlib.dates as mdates
+
+# customize  axis
+months = mdates.MonthLocator()
+monthsFmt = mdates.DateFormatter('%b')
+
+ax.set_xlim(list_pyear[0], list_pyear[-1])
+ax.xaxis.set_major_locator(months)
+ax.xaxis.set_major_formatter(monthsFmt)
+ax.set_ylim(0, 10)
+ax.set_ylabel('')
+
+
+
+
+
+
+
+
+
+

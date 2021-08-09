@@ -200,7 +200,7 @@ APEV = np.cumsum(variance) / np.sum(variance) * 100.0
 nterm = np.where(APEV <= 0.95 * 100)[0][-1]
 
 
-num_clusters = 12
+num_clusters = 21
 PCsub = PCs[:, :nterm+1]
 EOFsub = EOFs[:nterm+1, :]
 kma = KMeans(n_clusters=num_clusters, n_init=2000).fit(PCsub)
@@ -219,15 +219,26 @@ km = np.multiply(
 ) + np.tile(SlpGrdMean, (num_clusters, 1))
 
 
+
 #order = [10,5,0,4,2,9,6,7,1,11,8,3]
 #kma_order = [0,1,2,3,4,5,6,7,8,9,10,11]
 #kma_order = [7,11,10,6,8,4,3,2,5,9,0,1]
-kma_order = [9,8,2,1,7,4,10,11,3,6,0,5]
+#kma_order = [9,8,2,1,7,4,10,11,3,6,0,5]
 # # sort kmeans
-# kma_order = np.argsort(np.mean(-km, axis=1))
+#kma_order = np.argsort(np.mean(-km, axis=1))
 
+
+# kma_order = [16,15,8,12,1,0,10,
+#              9,17,14,7,13,19,5,
+#              20,4,6,3,18,11,2]
+kma_order = [15,14,7,11,0,20,9,
+             8,16,13,6,12,18,4,
+             19,3,5,2,17,10,1]
+
+
+# kma_order = np.arange(0,21)
 # # sort kmeans
-# kma_order = sort_cluster_gen_corr_end(kma.cluster_centers_, num_clusters)
+#kma_order = sort_cluster_gen_corr_end(kma.cluster_centers_, num_clusters)
 
 bmus_corrected = np.zeros((len(kma.labels_),), ) * np.nan
 for i in range(num_clusters):
@@ -241,8 +252,8 @@ sorted_centroids = centroids[kma_order, :]
 
 
 
-repmatDesviacion = np.tile(SlpGrdStd, (12,1))
-repmatMedia = np.tile(SlpGrdMean, (12,1))
+repmatDesviacion = np.tile(SlpGrdStd, (num_clusters,1))
+repmatMedia = np.tile(SlpGrdMean, (num_clusters,1))
 Km_slp = np.multiply(centroids,repmatDesviacion) + repmatMedia
 Xs = np.arange(np.min(X_in),np.max(X_in),2)
 Ys = np.arange(np.min(Y_in),np.max(Y_in),2)
@@ -256,18 +267,18 @@ for qq in range(lenXB-1):
 
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,5))
-gs1 = gridspec.GridSpec(2, 6)
+gs1 = gridspec.GridSpec(3, 7)
 gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
 c1 = 0
 c2 = 0
 counter = 0
 plotIndx = 0
 plotIndy = 0
-for hh in range(12):
+for hh in range(num_clusters):
     ax = plt.subplot(gs1[hh])
     clevels = np.arange(-27, 27, 1)
     num = kma_order[hh]
-    spatialField = Km_slp[(num - 1), :] / 100 - np.nanmean(SLPtcs, axis=0) / 100
+    spatialField = Km_slp[(num), :] / 100 - np.nanmean(SLPtcs, axis=0) / 100
     rectField = spatialField.reshape(63, 32)
 
    # cluster2SLPs = np.nanmean(SLP[cluster2SLPIndex, :], axis=0).reshape(73, 43) / 100 - np.nanmean(SLP, axis=0).reshape(73, 43) / 100
@@ -295,7 +306,7 @@ for hh in range(12):
 
 import pickle
 
-dwtPickle = 'dwtsOfExtraTropicalDays.pickle'
+dwtPickle = 'dwtsOfExtraTropicalDays21Clusters.pickle'
 outputDWTs = {}
 outputDWTs['SLPtcs'] = SLPtcs
 outputDWTs['TIMEtcs'] = TIMEtcs

@@ -364,7 +364,7 @@ for hh in range(9):
         c2 = 0
 
 
-num_clusters = 36
+num_clusters = 49
 PCsub = PCs[:, :nterm+1]
 EOFsub = EOFs[:nterm+1, :]
 kma = KMeans(n_clusters=num_clusters, n_init=2000).fit(PCsub)
@@ -431,8 +431,8 @@ CS = m.contourf(cx, cy, rectField, clevels, vmin=-15, vmax=15, cmap=cm.RdBu_r, s
 
 
 
-repmatDesviacion = np.tile(SlpGrdStd, (36,1))
-repmatMedia = np.tile(SlpGrdMean, (36,1))
+repmatDesviacion = np.tile(SlpGrdStd, (num_clusters,1))
+repmatMedia = np.tile(SlpGrdMean, (num_clusters,1))
 Km_ = np.multiply(sorted_centroids,repmatDesviacion) + repmatMedia
 
 
@@ -449,7 +449,7 @@ Km_grd = Km_grd[:,0:len(X_B)]
 
 import matplotlib.cm as cm
 
-etcolors = cm.rainbow(np.linspace(0, 1,36))
+etcolors = cm.rainbow(np.linspace(0, 1,num_clusters))
 tccolors = np.flipud(cm.gray(np.linspace(0,1,7)))
 
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
@@ -461,21 +461,21 @@ Y_in2 = SLPs2['Y_in']
 
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,10))
-gs1 = gridspec.GridSpec(7, 6)
+gs1 = gridspec.GridSpec(7, 7)
 gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
 c1 = 0
 c2 = 0
 counter = 0
 plotIndx = 0
 plotIndy = 0
-for hh in range(36):
+for hh in range(num_clusters):
     #p1 = plt.subplot2grid((6,6),(c1,c2))
     ax = plt.subplot(gs1[hh])
 
-    if hh <= 36:
+    if hh <= num_clusters:
         num = kma_order[hh]
 
-        spatialField = Km_slp[(num - 1), :] / 100 - np.nanmean(SLP_C, axis=0) / 100
+        spatialField = Km_slp[(hh - 1), :] / 100 - np.nanmean(SLP_C, axis=0) / 100
 
         #spatialField = np.multiply(EOFs[hh,0:len(X_in)],np.sqrt(variance[hh]))
         Xs = np.arange(np.min(X_in),np.max(X_in),2)
@@ -523,73 +523,73 @@ for hh in range(36):
     else:
         plotIndy = 0
         plotIndx = plotIndx + 1
-
-ax = plt.subplot(gs1[36])
-m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
-m.fillcontinents(color=dwtcolors[36])
-cx,cy =m(X_in2,Y_in2)
-m.drawcoastlines()
-CS = m.contourf(cx,cy,cluster1SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
-tx, ty = m(320, -0)
-ax.text(tx, ty, '{}'.format(len(c1times)))
-
-ax = plt.subplot(gs1[37])
-m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
-m.fillcontinents(color=dwtcolors[37])
-cx,cy =m(X_in2,Y_in2)
-m.drawcoastlines()
-CS = m.contourf(cx,cy,cluster2SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
-tx, ty = m(320, -0)
-ax.text(tx, ty, '{}'.format(len(c2times)))
-
-ax = plt.subplot(gs1[38])
-m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
-m.fillcontinents(color=dwtcolors[38])
-cx,cy =m(X_in2,Y_in2)
-m.drawcoastlines()
-CS = m.contourf(cx,cy,cluster3SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
-tx, ty = m(320, -0)
-ax.text(tx, ty, '{}'.format(len(c3times)))
-
-ax = plt.subplot(gs1[39])
-m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
-m.fillcontinents(color=dwtcolors[39])
-cx,cy =m(X_in2,Y_in2)
-m.drawcoastlines()
-CS = m.contourf(cx,cy,cluster4SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
-tx, ty = m(320, -0)
-ax.text(tx, ty, '{}'.format(len(c4times)))
-
-ax = plt.subplot(gs1[40])
-m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
-m.fillcontinents(color=dwtcolors[40])
-cx,cy =m(X_in2,Y_in2)
-m.drawcoastlines()
-CS = m.contourf(cx,cy,cluster5SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
-tx, ty = m(320, -0)
-ax.text(tx, ty, '{}'.format(len(c5times)))
-
-ax = plt.subplot(gs1[41])
-m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
-m.fillcontinents(color=dwtcolors[41])
-cx,cy =m(X_in2,Y_in2)
-m.drawcoastlines()
-CS = m.contourf(cx,cy,cluster6SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
-tx, ty = m(320, -0)
-ax.text(tx, ty, '{}'.format(len(c6times)))
-
-
-colormap = cm.RdBu_r
-normalize = mcolors.Normalize(vmin=-12, vmax=12)
-
-s_map2 = cm.ScalarMappable(norm=normalize, cmap=colormap)
-#s_map2.set_array(colorparam)
-fig2.subplots_adjust(right=0.85)
-cbar_ax2 = fig2.add_axes([0.91, 0.15, 0.02, 0.7])
-cbar2 = fig2.colorbar(s_map2, cax=cbar_ax2)
-cbar2.set_label('slp anom (mbar)')
-
-plt.show()
+#
+# ax = plt.subplot(gs1[36])
+# m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+# m.fillcontinents(color=dwtcolors[36])
+# cx,cy =m(X_in2,Y_in2)
+# m.drawcoastlines()
+# CS = m.contourf(cx,cy,cluster1SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+# tx, ty = m(320, -0)
+# ax.text(tx, ty, '{}'.format(len(c1times)))
+#
+# ax = plt.subplot(gs1[37])
+# m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+# m.fillcontinents(color=dwtcolors[37])
+# cx,cy =m(X_in2,Y_in2)
+# m.drawcoastlines()
+# CS = m.contourf(cx,cy,cluster2SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+# tx, ty = m(320, -0)
+# ax.text(tx, ty, '{}'.format(len(c2times)))
+#
+# ax = plt.subplot(gs1[38])
+# m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+# m.fillcontinents(color=dwtcolors[38])
+# cx,cy =m(X_in2,Y_in2)
+# m.drawcoastlines()
+# CS = m.contourf(cx,cy,cluster3SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+# tx, ty = m(320, -0)
+# ax.text(tx, ty, '{}'.format(len(c3times)))
+#
+# ax = plt.subplot(gs1[39])
+# m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+# m.fillcontinents(color=dwtcolors[39])
+# cx,cy =m(X_in2,Y_in2)
+# m.drawcoastlines()
+# CS = m.contourf(cx,cy,cluster4SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+# tx, ty = m(320, -0)
+# ax.text(tx, ty, '{}'.format(len(c4times)))
+#
+# ax = plt.subplot(gs1[40])
+# m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+# m.fillcontinents(color=dwtcolors[40])
+# cx,cy =m(X_in2,Y_in2)
+# m.drawcoastlines()
+# CS = m.contourf(cx,cy,cluster5SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+# tx, ty = m(320, -0)
+# ax.text(tx, ty, '{}'.format(len(c5times)))
+#
+# ax = plt.subplot(gs1[41])
+# m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')
+# m.fillcontinents(color=dwtcolors[41])
+# cx,cy =m(X_in2,Y_in2)
+# m.drawcoastlines()
+# CS = m.contourf(cx,cy,cluster6SLPs.T,clevels,vmin=-5,vmax=7,cmap=cm.RdBu_r,shading='gouraud')
+# tx, ty = m(320, -0)
+# ax.text(tx, ty, '{}'.format(len(c6times)))
+#
+#
+# colormap = cm.RdBu_r
+# normalize = mcolors.Normalize(vmin=-12, vmax=12)
+#
+# s_map2 = cm.ScalarMappable(norm=normalize, cmap=colormap)
+# #s_map2.set_array(colorparam)
+# fig2.subplots_adjust(right=0.85)
+# cbar_ax2 = fig2.add_axes([0.91, 0.15, 0.02, 0.7])
+# cbar2 = fig2.colorbar(s_map2, cax=cbar_ax2)
+# cbar2.set_label('slp anom (mbar)')
+#
+# plt.show()
 
 
 
@@ -603,7 +603,7 @@ plt.show()
 
 import pickle
 
-dwtPickle = 'dwtsAll6TCTracksALLDATA.pickle'
+dwtPickle = 'dwts49ALLDATA.pickle'
 outputDWTs = {}
 outputDWTs['APEV'] = APEV
 outputDWTs['EOFs'] = EOFs
@@ -659,7 +659,7 @@ with open(dwtPickle,'wb') as f:
 
 import pickle
 
-dwtPickle = 'dwtsAll6TCTracksClusters.pickle'
+dwtPickle = 'dwts49Clusters.pickle'
 outputDWTs = {}
 outputDWTs['APEV'] = APEV
 outputDWTs['EOFs'] = EOFs

@@ -7,8 +7,8 @@ from mpl_toolkits.basemap import Basemap
 import pickle
 
 
-
-with open(r"dwtsAll6TCTracksALLDATA.pickle", "rb") as input_file:
+# with open(r"dwtsAll6TCTracksALLDATA.pickle", "rb") as input_file:
+with open(r"dwts49ALLDATA.pickle", "rb") as input_file:
    historicalDWTs = pickle.load(input_file)
 
 SlpGrdMeanET = historicalDWTs['SlpGrdMean']
@@ -20,8 +20,8 @@ kma_orderET = historicalDWTs['kma_order']
 SLPET = historicalDWTs['SLP']
 group_sizeET = historicalDWTs['group_size']
 
-
-with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+# with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+with open(r"dwtsOfExtraTropicalDays21Clusters.pickle", "rb") as input_file:
    historicalTWTs = pickle.load(input_file)
 SlpGrdMeanTC = historicalTWTs['SlpGrdMean']
 SlpGrdStdTC = historicalTWTs['SlpGrdStd']
@@ -33,8 +33,8 @@ SLPTC = historicalTWTs['SLP']
 group_sizeTC = historicalTWTs['group_size']
 
 
-repmatDesviacionET = np.tile(SlpGrdStdET, (36,1))
-repmatMediaET = np.tile(SlpGrdMeanET, (36,1))
+repmatDesviacionET = np.tile(SlpGrdStdET, (49,1))
+repmatMediaET = np.tile(SlpGrdMeanET, (49,1))
 Km_ET = np.multiply(sorted_centroidsET,repmatDesviacionET) + repmatMediaET
 [mK, nK] = np.shape(Km_ET)
 Km_slpET = Km_ET[:,0:int(nK/2)]
@@ -49,8 +49,8 @@ Km_grdET = Km_grdET[:,0:len(X_BET)]
 
 
 
-repmatDesviacionTC = np.tile(SlpGrdStdTC, (12,1))
-repmatMediaTC = np.tile(SlpGrdMeanTC, (12,1))
+repmatDesviacionTC = np.tile(SlpGrdStdTC, (21,1))
+repmatMediaTC = np.tile(SlpGrdMeanTC, (21,1))
 Km_slpTC = np.multiply(sorted_centroidsTC,repmatDesviacionTC) + repmatMediaTC
 XsTC = np.arange(np.min(X_inTC),np.max(X_inTC),2)
 YsTC = np.arange(np.min(Y_inTC),np.max(Y_inTC),2)
@@ -64,8 +64,8 @@ lenXBTC = len(X_inTC)
 
 
 
-etcolors = cm.viridis(np.linspace(0, 1, 48-11))
-tccolors = np.flipud(cm.autumn(np.linspace(0,1,12)))
+etcolors = cm.viridis(np.linspace(0, 1, 70-20))
+tccolors = np.flipud(cm.autumn(np.linspace(0,1,21)))
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
 
@@ -74,18 +74,18 @@ dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,10))
-gs1 = gridspec.GridSpec(8, 6)
+gs1 = gridspec.GridSpec(10, 7)
 gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
 c1 = 0
 c2 = 0
 counter = 0
 plotIndx = 0
 plotIndy = 0
-for hh in range(48):
+for hh in range(70):
     #p1 = plt.subplot2grid((6,6),(c1,c2))
     ax = plt.subplot(gs1[hh])
 
-    if hh <= 35:
+    if hh <= 48:
         num = kma_orderET[hh]
 
         #spatialField = Km_slpET[(num - 1), :] / 100 - np.nanmean(SLPET, axis=0) / 100
@@ -118,9 +118,9 @@ for hh in range(48):
 
     else:
         clevels = np.arange(-27, 27, 1)
-        num = kma_orderTC[hh-36]
+        num = kma_orderTC[hh-49]
         #spatialField = Km_slpTC[(num - 1), :] / 100 - np.nanmean(SLPTC, axis=0) / 100
-        spatialField = Km_slpTC[(hh-36), :] / 100 - np.nanmean(SLPTC, axis=0) / 100
+        spatialField = Km_slpTC[(hh-49), :] / 100 - np.nanmean(SLPTC, axis=0) / 100
 
         rectField = spatialField.reshape(63, 32)
 
@@ -131,7 +131,7 @@ for hh in range(48):
         # #temp = spatialField.flatten()
         # for tt in range(len(sea_nodes)):
         #     rectField[sea_nodes[tt]] = spatialField[tt]
-        m = Basemap(projection='merc', llcrnrlat=-5, urcrnrlat=55, llcrnrlon=255, urcrnrlon=360, lat_ts=10,
+        m = Basemap(projection='merc', llcrnrlat=-5, urcrnrlat=55, llcrnrlon=258, urcrnrlon=357, lat_ts=10,
                     resolution='c')
         m.fillcontinents(color=dwtcolors[hh])
         cx, cy = m(X_inTC, Y_inTC)

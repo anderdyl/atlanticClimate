@@ -28,15 +28,16 @@ def dateDay2datetimeDate(d_vec):
    return [datetime.date(d[0], d[1], d[2]) for d in d_vec]
 
 
-with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+# with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+with open(r"dwts49Clusters.pickle", "rb") as input_file:
    historicalDWTs = pickle.load(input_file)
 
 timeDWTs = historicalDWTs['SLPtime']
 # outputDWTs['slpDates'] = slpDates
 dwtBmus = historicalDWTs['bmus_corrected']
 
-
-with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+# with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+with open(r"dwtsOfExtraTropicalDays21Clusters.pickle", "rb") as input_file:
    historicalTWTs = pickle.load(input_file)
 #timeTCs = historicalTWTs['tcDates']
 twtBmus = historicalTWTs['bmus_corrected']
@@ -64,7 +65,7 @@ timeTWTs = timeDWTs[mask2,:]
 
 bmus = np.nan * np.ones((len(timeDWTs)))
 bmus[mask] = dwtBmus+1
-bmus[mask2] = twtBmus+37
+bmus[mask2] = twtBmus+50
 
 bmus_dates = dateDay2datetimeDate(timeDWTs)
 bmus_dates_months = np.array([d.month for d in bmus_dates])
@@ -73,16 +74,16 @@ bmus_dates_days = np.array([d.day for d in bmus_dates])
 
 # etcolors = cm.rainbow(np.linspace(0, 1, 48-11))
 # tccolors = np.flipud(cm.gray(np.linspace(0,1,12)))
-etcolors = cm.viridis(np.linspace(0, 1, 48-11))
-tccolors = np.flipud(cm.autumn(np.linspace(0,1,12)))
+etcolors = cm.viridis(np.linspace(0, 1, 70-20))
+tccolors = np.flipud(cm.autumn(np.linspace(0,1,21)))
 
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
 
 # generate perpetual year list
 list_pyear = GenOneYearDaily(month_ini=6)
-m_plot = np.zeros((48, len(list_pyear))) * np.nan
-num_clusters=48
+m_plot = np.zeros((70, len(list_pyear))) * np.nan
+num_clusters=70
 num_sim=1
 # sort data
 for i, dpy in enumerate(list_pyear):
