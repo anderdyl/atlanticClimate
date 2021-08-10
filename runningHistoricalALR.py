@@ -55,16 +55,16 @@ def dateDay2datetime(d_vec):
 
 
 
-
-with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+# with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+with open(r"dwts49Clusters.pickle", "rb") as input_file:
    historicalDWTs = pickle.load(input_file)
 
 timeDWTs = historicalDWTs['SLPtime']
 # outputDWTs['slpDates'] = slpDates
 dwtBmus = historicalDWTs['bmus_corrected']
 
-
-with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+# with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+with open(r"dwtsOfExtraTropicalDays21Clusters.pickle", "rb") as input_file:
    historicalTWTs = pickle.load(input_file)
 #timeTCs = historicalTWTs['tcDates']
 twtBmus = historicalTWTs['bmus_corrected']
@@ -92,7 +92,7 @@ timeTWTs = timeDWTs[mask2,:]
 
 bmus = np.nan * np.ones((len(timeDWTs)))
 bmus[mask] = dwtBmus+0
-bmus[mask2] = twtBmus+36
+bmus[mask2] = twtBmus+49
 
 bmus_dates = dateDay2datetimeDate(timeDWTs)
 bmus_dates_months = np.array([d.month for d in bmus_dates])
@@ -242,14 +242,14 @@ xds_bmus_fit = xds_KMA_fit.sel(
 
 
 # Autoregressive logistic wrapper
-num_clusters = 48
-sim_num = 10
+num_clusters = 70
+sim_num = 100
 fit_and_save = True # False for loading
 p_test_ALR = '/media/dylananderson/Elements/NC_climate/testALR/'
 
 # ALR terms
 d_terms_settings = {
-    'mk_order'  : 1,
+    'mk_order'  : 2,
     'constant' : True,
     'long_term' : False,
     'seasonality': (True, [2, 4, 6]),
@@ -325,8 +325,8 @@ bmus_dates_days = np.array([d.day for d in dates_sim])
 
 # generate perpetual year list
 list_pyear = GenOneYearDaily(month_ini=6)
-m_plot = np.zeros((48, len(list_pyear))) * np.nan
-num_clusters=48
+m_plot = np.zeros((70, len(list_pyear))) * np.nan
+num_clusters=70
 num_sim=1
 # sort data
 for i, dpy in enumerate(list_pyear):
@@ -343,8 +343,8 @@ for i, dpy in enumerate(list_pyear):
       m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
 
 import matplotlib.cm as cm
-etcolors = cm.viridis(np.linspace(0, 1, 48-11))
-tccolors = np.flipud(cm.autumn(np.linspace(0,1,12)))
+etcolors = cm.viridis(np.linspace(0, 1, 70-20))
+tccolors = np.flipud(cm.autumn(np.linspace(0,1,21)))
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
 fig = plt.figure()
@@ -370,7 +370,7 @@ monthsFmt = mdates.DateFormatter('%b')
 ax.set_xlim(list_pyear[0], list_pyear[-1])
 ax.xaxis.set_major_locator(months)
 ax.xaxis.set_major_formatter(monthsFmt)
-ax.set_ylim(0, 10)
+ax.set_ylim(0, 100)
 ax.set_ylabel('')
 
 

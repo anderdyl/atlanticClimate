@@ -68,15 +68,16 @@ def dateDay2datetimeDate(d_vec):
    return [datetime.date(d[0], d[1], d[2]) for d in d_vec]
 
 
-with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+# with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+with open(r"dwts49Clusters.pickle", "rb") as input_file:
    historicalDWTs = pickle.load(input_file)
 
 timeDWTs = historicalDWTs['SLPtime']
 # outputDWTs['slpDates'] = slpDates
 dwtBmus = historicalDWTs['bmus_corrected']
 
-
-with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+# with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
+with open(r"dwtsOfExtraTropicalDays21Clusters.pickle", "rb") as input_file:
    historicalTWTs = pickle.load(input_file)
 #timeTCs = historicalTWTs['tcDates']
 twtBmus = historicalTWTs['bmus_corrected']
@@ -104,7 +105,7 @@ timeTWTs = timeDWTs[mask2,:]
 
 bmus = np.nan * np.ones((len(timeDWTs)))
 bmus[mask] = dwtBmus+1
-bmus[mask2] = twtBmus+37
+bmus[mask2] = twtBmus+50
 
 bmus_dates = dateDay2datetimeDate(timeDWTs)
 bmus_dates_months = np.array([d.month for d in bmus_dates])
@@ -419,10 +420,10 @@ for ic in range(25):
     # select DWT bmus at current AWT indexes
     index_1 = np.where(mjoBmus == ic+1)[0][:]
     sel_2 = bmus[index_1]
-    set_2 = np.arange(48)
+    set_2 = np.arange(70)
     # get DWT cluster probabilities
     cps = ClusterProbabilities(sel_2, set_2)
-    C_T = np.reshape(cps, (8, 6))
+    C_T = np.reshape(cps, (10, 7))
 
     # # axis colors
     # if wt_colors:
@@ -460,10 +461,10 @@ for ic in range(8):
     # select DWT bmus at current AWT indexes
     index_1 = np.where(mjoPhaseBig == ic+1)[0][:]
     sel_2 = bmusBig[index_1]
-    set_2 = np.arange(48)
+    set_2 = np.arange(70)
     # get DWT cluster probabilities
     cps = ClusterProbabilities(sel_2, set_2)
-    C_T = np.reshape(cps, (8, 6))
+    C_T = np.reshape(cps, (10, 7))
 
     # # axis colors
     # if wt_colors:

@@ -1,22 +1,9 @@
-import pandas as pd
+import numpy as np
+import datetime
 from dateutil.relativedelta import relativedelta
 import scipy.io as sio
 from scipy.io.matlab.mio5_params import mat_struct
-import datetime
-import pickle
-import numpy as np
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import matplotlib.colors as mcolors
-import matplotlib.cm as cm
-from matplotlib import gridspec
-
-# # import constants
-# from .config import _faspect, _fsize, _fdpi
-_faspect = 1.618
-_fsize = 9.8
-_fdpi = 128
 
 
 def GenOneYearDaily(yy=1981, month_ini=1):
@@ -86,6 +73,58 @@ def axplot_WT_Probs(ax, wt_probs,
 
 
 
+def ReadMatfile(p_mfile):
+    'Parse .mat file to nested python dictionaries'
+
+    def RecursiveMatExplorer(mstruct_data):
+        # Recursive function to extrat mat_struct nested contents
+
+        if isinstance(mstruct_data, mat_struct):
+            # mstruct_data is a matlab structure object, go deeper
+            d_rc = {}
+            for fn in mstruct_data._fieldnames:
+                d_rc[fn] = RecursiveMatExplorer(getattr(mstruct_data, fn))
+            return d_rc
+
+        else:
+            # mstruct_data is a numpy.ndarray, return value
+            return mstruct_data
+
+    # base matlab data will be in a dict
+    mdata = sio.loadmat(p_mfile, squeeze_me=True, struct_as_record=False)
+    mdata_keys = [x for x in mdata.keys() if x not in
+                  ['__header__','__version__','__globals__']]
+
+    # use recursive function
+    dout = {}
+    for k in mdata_keys:
+        dout[k] = RecursiveMatExplorer(mdata[k])
+    return dout
+
+
+
+with open('/home/dylananderson/projects/duckGeomorph/NAO2021.txt', 'r') as fd:
+    c = 0
+    dataNAO = list()
+    for line in fd:
+        splitLine = line.split(',')
+        secondSplit = splitLine[1].split('/')
+        dataNAO.append(float(secondSplit[0]))
+nao = np.asarray(dataNAO)
+
+dt = datetime.date(1950, 1, 1)
+end = datetime.date(2021, 6, 1)
+#step = datetime.timedelta(months=1)
+step = relativedelta(months=1)
+naoTime = []
+while dt < end:
+    naoTime.append(dt)#.strftime('%Y-%m-%d'))
+    dt += step
+
+
+
+
+import pickle
 
 with open(r"dwts49Clusters.pickle", "rb") as input_file:
 # with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
@@ -132,72 +171,42 @@ bmus_dates_days = np.array([d.day for d in bmus_dates])
 
 
 
-# etcolors = cm.rainbow(np.linspace(0, 1, 48-11))
-# tccolors = np.flipud(cm.gray(np.linspace(0,1,12)))
-etcolors = cm.viridis(np.linspace(0, 1, 70-20))
-tccolors = np.flipud(cm.autumn(np.linspace(0,1,21)))
-
-dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
+data = nao
+bins = np.linspace(np.min(data)-.05, np.max(data)+.05, 9)
+digitized = np.digitize(data, bins)
+bin_means = [data[digitized == i].mean() for i in range(1, len(bins))]
 
 
-
-with open(r"AWT1880to2020.pickle", "rb") as input_file:
-   historicalAWTs = pickle.load(input_file)
-awtClusters = historicalAWTs['clusters']
-awtPredictor = historicalAWTs['predictor']
-
-awtBmus = awtClusters.bmus.values
-
-
-dt = datetime.datetime(1880, 6, 1)
-end = datetime.datetime(2021, 6, 1)
-#step = datetime.timedelta(months=1)
-step = relativedelta(years=1)
-sstTime = []
-while dt < end:
-    sstTime.append(dt)
-    dt += step
-
-years = np.arange(1979,2021)
+years = np.arange(1979,2022)
+months = np.arange(1,13)
 awtYears = np.arange(1880,2021)
 
-awtDailyBmus = np.nan * np.ones(np.shape(bmus))
-for hh in years:
-   indexDWT = np.where((np.asarray(bmus_dates) >= datetime.date(hh,6,1)) & (np.asarray(bmus_dates) <= datetime.date(hh+1,6,1)))
-   indexAWT = np.where((awtYears == hh))
-   awtDailyBmus[indexDWT] = awtBmus[indexAWT]*np.ones(len(indexDWT[0]))
+naoTIME = naoTime[353:]
+naoTIME.append(datetime.date(2021,6,1))
+naoDailyBmus = np.nan * np.ones(np.shape(bmus))
+for hh in range(len(naoTime)):
+    #for mm in months:
+        # indexDWT = np.where((np.asarray(bmus_dates) >= datetime.date(hh,6,1)) & (np.asarray(bmus_dates) <= datetime.date(hh+1,6,1)))
+    indexDWT = np.where((np.asarray(bmus_dates) >= naoTIME[hh]) & (np.asarray(bmus_dates) <= naoTIME[hh+1]))
+    #indexAWT = np.where((awtYears == hh))
+    naoDailyBmus[indexDWT] = nao[hh]*np.ones(len(indexDWT[0]))
 
 
 
-fig10 = plt.figure()
+figClimate = plt.figure()
+ax3Cl = plt.subplot2grid((2,1),(0,0),rowspan=1,colspan=1)
+ax3Cl.plot(naoTime,nao)
+ax3Cl.set_xlim([datetime.date(1979,1,1),datetime.date(2021,5,1)])
+ax3Cl.set_ylabel('NAO')
+ax4Cl = plt.subplot2grid((2,1),(1,0),rowspan=1,colspan=1)
+ax4Cl.plot(naoTime,digitized)
+ax4Cl.set_xlim([datetime.date(1979,1,1),datetime.date(2021,5,1)])
+ax4Cl.set_ylabel('Bins')
 
-gs = gridspec.GridSpec(2, 3, wspace=0.10, hspace=0.15)
 
-for ic in range(6):
-    ax = plt.subplot(gs[ic])
 
-    # select DWT bmus at current AWT indexes
-    index_1 = np.where(awtDailyBmus == ic)[0][:]
-    sel_2 = bmus[index_1]
-    set_2 = np.arange(70)
-    # get DWT cluster probabilities
-    cps = ClusterProbabilities(sel_2, set_2)
-    C_T = np.reshape(cps, (10, 7))
 
-    # # axis colors
-    # if wt_colors:
-    #     caxis = cs_wt[ic]
-    # else:
-    caxis = 'black'
 
-    # plot axes
-    ax = plt.subplot(gs[ic])
-    axplot_WT_Probs(
-        ax, C_T,
-        ttl='WT {0}'.format(ic + 1),
-        cmap='Reds', caxis=caxis,
-    )
-    ax.set_aspect('equal')
 
 
 
