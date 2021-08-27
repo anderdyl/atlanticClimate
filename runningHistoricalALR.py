@@ -111,6 +111,26 @@ xds_KMA_fit = xr.Dataset(
 
 
 
+with open('/home/dylananderson/projects/duckGeomorph/NAO2021.txt', 'r') as fd:
+    c = 0
+    dataNAO = list()
+    for line in fd:
+        splitLine = line.split(',')
+        secondSplit = splitLine[1].split('/')
+        dataNAO.append(float(secondSplit[0]))
+nao = np.asarray(dataNAO)
+
+dt = datetime.date(1950, 1, 1)
+end = datetime.date(2021, 6, 1)
+#step = datetime.timedelta(months=1)
+step = relativedelta(months=1)
+naoTime = []
+while dt < end:
+    naoTime.append(dt)#.strftime('%Y-%m-%d'))
+    dt += step
+
+
+
 
 # MJO historical: rmm1, rmm2 (first date 1979-01-01 in order to avoid nans)
 dataMJO = ReadMatfile('/media/dylananderson/Elements/NC_climate/mjo_australia_2021.mat')
@@ -179,6 +199,40 @@ xds_PCs_fit = xr.Dataset(
 )
 # reindex annual data to daily data
 xds_PCs_fit = xr_daily(xds_PCs_fit)
+
+
+
+
+naoTIME = naoTime[353:]
+data = nao[353:]
+naoShort = data
+
+bins = np.linspace(np.min(data)-.05, np.max(data)+.05, 7)
+digitized = np.digitize(data, bins)
+bin_means = [data[digitized == i].mean() for i in range(1, len(bins))]
+
+
+years = np.arange(1979,2022)
+months = np.arange(1,13)
+awtYears = np.arange(1880,2021)
+
+
+digitShort = digitized#[353:]
+
+
+naoTIME.append(datetime.date(2021,6,1))
+naoDailyBmus = np.nan * np.ones(np.shape(bmus))
+naoDaily = np.nan * np.ones(np.shape(bmus))
+for hh in range(len(naoTIME)-1):
+    #for mm in months:
+        # indexDWT = np.where((np.asarray(bmus_dates) >= datetime.date(hh,6,1)) & (np.asarray(bmus_dates) <= datetime.date(hh+1,6,1)))
+    indexDWT = np.where((np.asarray(bmus_dates) >= naoTIME[hh]) & (np.asarray(bmus_dates) <= naoTIME[hh+1]))
+    #indexAWT = np.where((awtYears == hh))
+    naoDaily[indexDWT] = naoShort[hh]*np.ones(len(indexDWT[0]))
+    naoDailyBmus[indexDWT] = digitShort[hh]*np.ones(len(indexDWT[0]))
+
+
+
 
 
 

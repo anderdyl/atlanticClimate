@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 import scipy.io as sio
 from scipy.io.matlab.mio5_params import mat_struct
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 
 
 def GenOneYearDaily(yy=1981, month_ini=1):
@@ -170,9 +171,11 @@ bmus_dates_months = np.array([d.month for d in bmus_dates])
 bmus_dates_days = np.array([d.day for d in bmus_dates])
 
 
+naoTIME = naoTime[353:]
+data = nao[353:]
+naoShort = data
 
-data = nao
-bins = np.linspace(np.min(data)-.05, np.max(data)+.05, 9)
+bins = np.linspace(np.min(data)-.05, np.max(data)+.05, 7)
 digitized = np.digitize(data, bins)
 bin_means = [data[digitized == i].mean() for i in range(1, len(bins))]
 
@@ -181,29 +184,70 @@ years = np.arange(1979,2022)
 months = np.arange(1,13)
 awtYears = np.arange(1880,2021)
 
-naoTIME = naoTime[353:]
+
+digitShort = digitized#[353:]
+
+
 naoTIME.append(datetime.date(2021,6,1))
 naoDailyBmus = np.nan * np.ones(np.shape(bmus))
-for hh in range(len(naoTime)):
+naoDaily = np.nan * np.ones(np.shape(bmus))
+for hh in range(len(naoTIME)-1):
     #for mm in months:
         # indexDWT = np.where((np.asarray(bmus_dates) >= datetime.date(hh,6,1)) & (np.asarray(bmus_dates) <= datetime.date(hh+1,6,1)))
     indexDWT = np.where((np.asarray(bmus_dates) >= naoTIME[hh]) & (np.asarray(bmus_dates) <= naoTIME[hh+1]))
     #indexAWT = np.where((awtYears == hh))
-    naoDailyBmus[indexDWT] = nao[hh]*np.ones(len(indexDWT[0]))
+    naoDaily[indexDWT] = naoShort[hh]*np.ones(len(indexDWT[0]))
+    naoDailyBmus[indexDWT] = digitShort[hh]*np.ones(len(indexDWT[0]))
 
 
 
 figClimate = plt.figure()
-ax3Cl = plt.subplot2grid((2,1),(0,0),rowspan=1,colspan=1)
+ax3Cl = plt.subplot2grid((3,1),(0,0),rowspan=1,colspan=1)
 ax3Cl.plot(naoTime,nao)
+ax3Cl.plot(bmus_dates,naoDaily)
 ax3Cl.set_xlim([datetime.date(1979,1,1),datetime.date(2021,5,1)])
 ax3Cl.set_ylabel('NAO')
-ax4Cl = plt.subplot2grid((2,1),(1,0),rowspan=1,colspan=1)
-ax4Cl.plot(naoTime,digitized)
+ax4Cl = plt.subplot2grid((3,1),(1,0),rowspan=1,colspan=1)
+ax4Cl.plot(naoTIME[0:-1],digitized)
 ax4Cl.set_xlim([datetime.date(1979,1,1),datetime.date(2021,5,1)])
 ax4Cl.set_ylabel('Bins')
+ax5Cl = plt.subplot2grid((3,1),(2,0),rowspan=1,colspan=1)
+ax5Cl.plot(bmus_dates,naoDailyBmus)
+ax5Cl.set_xlim([datetime.date(1979,1,1),datetime.date(2021,5,1)])
+ax5Cl.set_ylabel('Daily Bins')
 
 
+
+
+fig10 = plt.figure()
+
+gs = gridspec.GridSpec(2, 3, wspace=0.10, hspace=0.15)
+
+for ic in range(6):
+    ax = plt.subplot(gs[ic])
+
+    # select DWT bmus at current AWT indexes
+    index_1 = np.where((naoDailyBmus-1) == ic)[0][:]
+    sel_2 = bmus[index_1]
+    set_2 = np.arange(70)
+    # get DWT cluster probabilities
+    cps = ClusterProbabilities(sel_2, set_2)
+    C_T = np.reshape(cps, (10, 7))
+
+    # # axis colors
+    # if wt_colors:
+    #     caxis = cs_wt[ic]
+    # else:
+    caxis = 'black'
+
+    # plot axes
+    ax = plt.subplot(gs[ic])
+    axplot_WT_Probs(
+        ax, C_T,
+        ttl='WT {0}'.format(ic + 1),
+        cmap='Reds', caxis=caxis,
+    )
+    ax.set_aspect('equal')
 
 
 
