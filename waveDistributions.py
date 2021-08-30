@@ -326,7 +326,7 @@ dwtBmus = bmus #DWT['DWT']['bmus']
 # removeTooSoon = np.where(dwtDates < tC[-45])
 #
 dwtTimes = dwtDates #[removeTooSoon]
-dwtBMUS = dwtBmus #[removeTooSoon]
+dwtBMUS = dwtBmus+1 #[removeTooSoon]
 # Next, we need to split the waves up into each DWT
 numDWTs = 70
 dwtHs = []
@@ -392,6 +392,7 @@ for xx in range(numDWTs):
 
 
 
+order = np.arange(0,70,1)
 order = np.hstack((kma_orderET,kma_orderTC))
 #order = DWT['DWT']['order']
 meanDWTHs = np.zeros((np.shape(order)))
@@ -426,7 +427,7 @@ plotIndx = 0
 plotIndy = 0
 for xx in range(numDWTs):
     #dwtInd = xx
-    dwtInd = order[xx]-1
+    dwtInd = xx#order[xx]
     #dwtInd = newOrder[xx]
 
     #ax = plt.subplot2grid((6, 5), (plotIndx, plotIndy), rowspan=1, colspan=1)
@@ -456,14 +457,14 @@ for xx in range(numDWTs):
         ax.spines['right'].set_color([0.3, 0.3, 0.3])
         ax.spines['left'].set_color([0.3, 0.3, 0.3])
 
-    if plotIndx < 5:
+    if plotIndx < 9:
         ax.xaxis.set_ticks([])
         ax.xaxis.set_ticklabels([])
     if plotIndy > 0:
         ax.yaxis.set_ticklabels([])
         ax.yaxis.set_ticks([])
     counter = counter + 1
-    if plotIndy < 4:
+    if plotIndy < 6:
         plotIndy = plotIndy + 1
     else:
         plotIndy = 0
