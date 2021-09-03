@@ -400,6 +400,18 @@ for xx in range(numDWTs):
     data = dwtHs[xx]
     meanDWTHs[xx] = np.nanmean(data)
 
+meanDWTTp = np.zeros((np.shape(order)))
+for xx in range(numDWTs):
+    data = dwtTp[xx]
+    meanDWTTp[xx] = np.nanmean(data)
+
+meanDWTDm = np.zeros((np.shape(order)))
+for xx in range(numDWTs):
+    data = dwtDm[xx]
+    ind = np.where((data == 0))
+    data[ind] = data[ind]*np.nan
+    meanDWTDm[xx] = np.nanmedian(data)
+
 # newOrder = np.argsort(meanDWTHs)
 #
 # orderedDWTs = np.zeros((np.shape(dwtBMUS)))
@@ -416,6 +428,7 @@ tccolors = np.flipud(cm.autumn(np.linspace(0,1,21)))
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
 
+plt.style.use('dark_background')
 
 dist_space = np.linspace(0, 4, 80)
 fig = plt.figure(figsize=(10,10))
@@ -434,7 +447,7 @@ for xx in range(numDWTs):
     ax = plt.subplot(gs2[xx])
 
     # normalize = mcolors.Normalize(vmin=np.min(colorparams), vmax=np.max(colorparams))
-    normalize = mcolors.Normalize(vmin=.25, vmax=2.5)
+    normalize = mcolors.Normalize(vmin=.5, vmax=2.0)
 
     ax.set_xlim([0, 3])
     ax.set_ylim([0, 2])
@@ -460,9 +473,14 @@ for xx in range(numDWTs):
     if plotIndx < 9:
         ax.xaxis.set_ticks([])
         ax.xaxis.set_ticklabels([])
+        ax.yaxis.set_ticklabels([])
+
     if plotIndy > 0:
         ax.yaxis.set_ticklabels([])
         ax.yaxis.set_ticks([])
+    if plotIndx == 9 and plotIndy == 0:
+        ax.yaxis.set_ticklabels([])
+
     counter = counter + 1
     if plotIndy < 6:
         plotIndy = plotIndy + 1
@@ -478,6 +496,151 @@ fig.subplots_adjust(right=0.86)
 cbar_ax = fig.add_axes([0.89, 0.15, 0.02, 0.7])
 cbar = fig.colorbar(s_map, cax=cbar_ax)
 cbar.set_label('Mean Hs (m)')
+
+
+
+
+
+
+fig = plt.figure(figsize=(10,10))
+gs2 = gridspec.GridSpec(10, 7)
+dist_space = np.linspace(2, 13, 80)
+
+colorparam = np.zeros((numDWTs,))
+counter = 0
+plotIndx = 0
+plotIndy = 0
+for xx in range(numDWTs):
+    #dwtInd = xx
+    dwtInd = xx#order[xx]
+
+    ax = plt.subplot(gs2[xx])
+
+    # normalize = mcolors.Normalize(vmin=np.min(colorparams), vmax=np.max(colorparams))
+    normalize = mcolors.Normalize(vmin=6, vmax=10)
+
+    ax.set_xlim([2, 13])
+    ax.set_ylim([0, 0.5])
+    data = dwtTp[dwtInd]
+    if len(data) > 0:
+        kde = gaussian_kde(data)
+        colorparam[counter] = np.nanmean(data)
+        colormap = cm.Reds
+        color = colormap(normalize(colorparam[counter]))
+        ax.plot(dist_space, kde(dist_space), linewidth=1, color=color)
+        ax.spines['bottom'].set_color([0.5, 0.5, 0.5])
+        ax.spines['top'].set_color([0.5, 0.5, 0.5])
+        ax.spines['right'].set_color([0.5, 0.5, 0.5])
+        ax.spines['left'].set_color([0.5, 0.5, 0.5])
+        # ax.text(1.8, 1, np.round(colorparam*100)/100, fontweight='bold')
+
+    else:
+        ax.spines['bottom'].set_color([0.3, 0.3, 0.3])
+        ax.spines['top'].set_color([0.3, 0.3, 0.3])
+        ax.spines['right'].set_color([0.3, 0.3, 0.3])
+        ax.spines['left'].set_color([0.3, 0.3, 0.3])
+
+    if plotIndx < 9:
+        ax.xaxis.set_ticks([])
+        ax.xaxis.set_ticklabels([])
+        ax.yaxis.set_ticklabels([])
+
+    if plotIndy > 0:
+        ax.yaxis.set_ticklabels([])
+        ax.yaxis.set_ticks([])
+    if plotIndx == 9 and plotIndy == 0:
+        ax.yaxis.set_ticklabels([])
+
+    counter = counter + 1
+    if plotIndy < 6:
+        plotIndy = plotIndy + 1
+    else:
+        plotIndy = 0
+        plotIndx = plotIndx + 1
+    print(plotIndy, plotIndx)
+
+plt.show()
+s_map = cm.ScalarMappable(norm=normalize, cmap=colormap)
+s_map.set_array(colorparam)
+fig.subplots_adjust(right=0.86)
+cbar_ax = fig.add_axes([0.89, 0.15, 0.02, 0.7])
+cbar = fig.colorbar(s_map, cax=cbar_ax)
+cbar.set_label('Mean Tp (s)')
+
+
+
+
+
+
+fig = plt.figure(figsize=(10,10))
+gs2 = gridspec.GridSpec(10, 7)
+dist_space = np.linspace(-90, 90, 90)
+
+colorparam = np.zeros((numDWTs,))
+counter = 0
+plotIndx = 0
+plotIndy = 0
+for xx in range(numDWTs):
+    #dwtInd = xx
+    dwtInd = xx#order[xx]
+
+    ax = plt.subplot(gs2[xx])
+
+    # normalize = mcolors.Normalize(vmin=np.min(colorparams), vmax=np.max(colorparams))
+    normalize = mcolors.Normalize(vmin=-30, vmax=30)
+
+    ax.set_xlim([-90, 90])
+    ax.set_ylim([0, 0.025])
+    data = dwtDm[dwtInd]
+    # ind = np.where((data == 0))
+    ind = np.nonzero(data)
+    data2 = data[ind]
+
+    if len(data) > 0:
+        kde = gaussian_kde(data2)
+        colorparam[counter] = np.nanmedian(data2)
+        colormap = cm.Reds
+        color = colormap(normalize(colorparam[counter]))
+        ax.plot(dist_space, kde(dist_space), linewidth=1, color=color)
+        ax.spines['bottom'].set_color([0.5, 0.5, 0.5])
+        ax.spines['top'].set_color([0.5, 0.5, 0.5])
+        ax.spines['right'].set_color([0.5, 0.5, 0.5])
+        ax.spines['left'].set_color([0.5, 0.5, 0.5])
+        # ax.text(1.8, 1, np.round(colorparam*100)/100, fontweight='bold')
+
+    else:
+        ax.spines['bottom'].set_color([0.3, 0.3, 0.3])
+        ax.spines['top'].set_color([0.3, 0.3, 0.3])
+        ax.spines['right'].set_color([0.3, 0.3, 0.3])
+        ax.spines['left'].set_color([0.3, 0.3, 0.3])
+
+    if plotIndx < 9:
+        ax.xaxis.set_ticks([])
+        ax.xaxis.set_ticklabels([])
+        ax.yaxis.set_ticklabels([])
+
+    if plotIndy > 0:
+        ax.yaxis.set_ticklabels([])
+        ax.yaxis.set_ticks([])
+    if plotIndx == 9 and plotIndy == 0:
+        ax.yaxis.set_ticklabels([])
+
+    counter = counter + 1
+    if plotIndy < 6:
+        plotIndy = plotIndy + 1
+    else:
+        plotIndy = 0
+        plotIndx = plotIndx + 1
+    print(plotIndy, plotIndx)
+
+plt.show()
+s_map = cm.ScalarMappable(norm=normalize, cmap=colormap)
+s_map.set_array(colorparam)
+fig.subplots_adjust(right=0.86)
+cbar_ax = fig.add_axes([0.89, 0.15, 0.02, 0.7])
+cbar = fig.colorbar(s_map, cax=cbar_ax)
+cbar.set_label('Mean Dm (deg)')
+
 
 
 

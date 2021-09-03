@@ -115,7 +115,7 @@ class GPSDistance(Metric):
         return currD
 
 
-file = '/media/dylananderson/Elements/SERDP/Data/TC_tracks/IBTrACS.NA.v04r00.nc'
+file = '/media/dylananderson/Elements1/SERDP/Data/TC_tracks/IBTrACS.NA.v04r00.nc'
 data = xr.open_dataset(file)
 #merged = data['merged'].values
 TCtime = data['time'].values
@@ -141,20 +141,34 @@ for hh in range(len(TCtime)):
         streamPres.append(TCpres[hh,indexReal[0]])
         streamWind.append(TCwind[hh,indexReal[0]])
 
-metric = GPSDistance()
-# qb = QuickBundles(threshold=2750,metric=metric)
-qb = QuickBundles(threshold=1900,metric=metric)
-
-clusters = qb.cluster(streams)
-print("Nb. clusters:",len(clusters))
-
-
-
 
 
 asdfg
 
 
+metric = GPSDistance()
+# qb = QuickBundles(threshold=2750,metric=metric)
+# qb = QuickBundles(threshold=1900,metric=metric)
+qb = QuickBundles(threshold=10000,metric=metric)
+
+clusters = qb.cluster(streams)
+print("Nb. clusters:",len(clusters))
+
+numStorms = np.arange(0,len(streams))
+plt.style.use('dark_background')
+fig = plt.figure()
+p1 = plt.subplot2grid((1, 1), (0, 0), rowspan=1, colspan=1)
+m = Basemap(llcrnrlon=-120.7, llcrnrlat=0., urcrnrlon=-10.1, urcrnrlat=60, projection='merc', lat_1=30., lat_2=60.,
+            lat_0=34.83158, lon_0=-98.)
+for i in numStorms:
+    cx, cy = m(streams[int(i)][:, 1], streams[int(i)][:, 0])  # convert to map projection coordinate
+# cx = streams[i][:,1]
+# cy = streams[i][:,0]
+    m.plot(cx, cy, marker=None)#, color='black')
+# m.drawcoastlines()
+# m.fillcontinents(color='white')
+# m.drawlsmask(land_color='brown',ocean_color='blue',lakes=True)
+m.shadedrelief()
 
 fig = plt.figure()
 #m = Basemap(projection='merc', llcrnrlat=0, urcrnrlat=60, llcrnrlon=250, urcrnrlon=-10, lat_ts=10,resolution='c')

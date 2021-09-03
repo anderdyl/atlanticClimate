@@ -148,7 +148,7 @@ bmus_dateTimes = bmus_dateTimes[120:]
 
 
 
-with open(r"filteredStorms.pickle", "rb") as input_file:
+with open(r"/home/dylananderson/projects/duckGeomorph/filteredStorms.pickle", "rb") as input_file:
    filteredStorms = pickle.load(input_file)
 
 filteredHs = filteredStorms['filteredHs']
@@ -156,19 +156,41 @@ filteredTp = filteredStorms['filteredTp']
 filteredDm = filteredStorms['filteredDm']
 filteredNTR = filteredStorms['filteredNTR']
 filteredDur = filteredStorms['filteredDur']
+filteredTime = filteredStorms['filteredTime']
 
 
+stormBmus = list()
+for i in filteredTime:
+    ind = np.where((datetime(i.year,i.month,i.day) == np.asarray(bmus_dateTimes)))
+    bmusOfStorm = int(bmus[ind[0][0]])
+    stormBmus.append(bmusOfStorm)
+
+bmuOpts = np.arange(0,70)
+
+howmany = list()
+stormPerBmu = list()
+for bmu in bmuOpts:
+    findAll = np.where((bmu == bmus))
+    howmany.append((len(findAll[0])))
+    findStorm = np.where((bmu == np.asarray(stormBmus)))
+    stormPerBmu.append((len(findStorm[0])))
 
 
+probs = np.asarray(stormPerBmu)/np.asarray(howmany)
+probsGrid = probs.reshape(10,7)
 
-
-
-
-
-
-
-
-
-
-
+plt.style.use('dark_background')
+fig = plt.figure(figsize=(10,10))
+# gs2 = gridspec.GridSpec(10, 7)
+ax1 = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=1)
+s_map = ax1.pcolor(np.flipud(probsGrid),cmap=cm.Reds)
+plt.title('Storm Probability')
+fig.subplots_adjust(right=0.86)
+cbar_ax = fig.add_axes([0.89, 0.15, 0.02, 0.7])
+cbar = fig.colorbar(s_map, cax=cbar_ax)
+cbar.set_label('probability')
+ax1.xaxis.set_ticks([])
+ax1.xaxis.set_ticklabels([])
+ax1.yaxis.set_ticks([])
+ax1.yaxis.set_ticklabels([])
 
