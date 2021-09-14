@@ -450,7 +450,7 @@ mjoRmm2Big = mjoRmm2[bigInd]
 mjoPhaseBig = mjoPhase[bigInd]
 bmusBig = bmus[bigInd]
 
-
+plt.style.use('dark_background')
 fig10 = plt.figure()
 
 gs = gridspec.GridSpec(1, 8, wspace=0.10, hspace=0.15)
@@ -477,6 +477,6 @@ for ic in range(8):
     axplot_WT_Probs(
         ax, C_T,
         ttl='WT {0}'.format(ic + 1),
-        cmap='Reds', caxis=caxis,
+        cmap='Reds', caxis=caxis, vmin=0, vmax=0.07
     )
     ax.set_aspect('equal')
