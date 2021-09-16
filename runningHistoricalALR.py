@@ -111,24 +111,6 @@ xds_KMA_fit = xr.Dataset(
 
 
 
-with open('/home/dylananderson/projects/duckGeomorph/NAO2021.txt', 'r') as fd:
-    c = 0
-    dataNAO = list()
-    for line in fd:
-        splitLine = line.split(',')
-        secondSplit = splitLine[1].split('/')
-        dataNAO.append(float(secondSplit[0]))
-nao = np.asarray(dataNAO)
-
-dt = datetime.date(1950, 1, 1)
-end = datetime.date(2021, 6, 1)
-#step = datetime.timedelta(months=1)
-step = relativedelta(months=1)
-naoTime = []
-while dt < end:
-    naoTime.append(dt)#.strftime('%Y-%m-%d'))
-    dt += step
-
 
 
 
@@ -149,89 +131,118 @@ xds_MJO_fit = xr.Dataset(
 xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1))
 
 
+##### AWT FROM ENSO SSTs
+# with open(r"AWT1880to2020.pickle", "rb") as input_file:
+#    historicalAWTs = pickle.load(input_file)
+# awtClusters = historicalAWTs['clusters']
+# awtPredictor = historicalAWTs['predictor']
+#
+# awtBmus = awtClusters.bmus.values
+# pc1Annual = awtClusters.PCs[:,0]
+# pc2Annual = awtClusters.PCs[:,1]
+# pc3Annual = awtClusters.PCs[:,2]
+#
+#
+# dt = datetime(1880, 6, 1)
+# end = datetime(2021, 6, 1)
+# #step = datetime.timedelta(months=1)
+# step = relativedelta(years=1)
+# sstTime = []
+# while dt < end:
+#     sstTime.append(dt)
+#     dt += step
+#
+# years = np.arange(1979,2021)
+# awtYears = np.arange(1880,2021)
+#
+# awtDailyBmus = np.nan * np.ones(np.shape(bmus))
+# PC1 = np.nan * np.ones(np.shape(bmus))
+# PC2 = np.nan * np.ones(np.shape(bmus))
+# PC3 = np.nan * np.ones(np.shape(bmus))
+#
+# for hh in years:
+#    indexDWT = np.where((np.asarray(bmus_dates) >= date(hh,6,1)) & (np.asarray(bmus_dates) <= date(hh+1,5,31)))
+#    indexAWT = np.where((awtYears == hh))
+#    awtDailyBmus[indexDWT] = awtBmus[indexAWT]*np.ones(len(indexDWT[0]))
+#    PC1[indexDWT] = pc1Annual[indexAWT]*np.ones(len(indexDWT[0]))
+#    PC2[indexDWT] = pc2Annual[indexAWT]*np.ones(len(indexDWT[0]))
+#    PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
 
-with open(r"AWT1880to2020.pickle", "rb") as input_file:
-   historicalAWTs = pickle.load(input_file)
-awtClusters = historicalAWTs['clusters']
-awtPredictor = historicalAWTs['predictor']
-
-awtBmus = awtClusters.bmus.values
-pc1Annual = awtClusters.PCs[:,0]
-pc2Annual = awtClusters.PCs[:,1]
-pc3Annual = awtClusters.PCs[:,2]
-
-
-dt = datetime(1880, 6, 1)
-end = datetime(2021, 6, 1)
-#step = datetime.timedelta(months=1)
-step = relativedelta(years=1)
-sstTime = []
-while dt < end:
-    sstTime.append(dt)
-    dt += step
-
-years = np.arange(1979,2021)
-awtYears = np.arange(1880,2021)
-
-awtDailyBmus = np.nan * np.ones(np.shape(bmus))
-PC1 = np.nan * np.ones(np.shape(bmus))
-PC2 = np.nan * np.ones(np.shape(bmus))
-PC3 = np.nan * np.ones(np.shape(bmus))
-
-for hh in years:
-   indexDWT = np.where((np.asarray(bmus_dates) >= date(hh,6,1)) & (np.asarray(bmus_dates) <= date(hh+1,5,31)))
-   indexAWT = np.where((awtYears == hh))
-   awtDailyBmus[indexDWT] = awtBmus[indexAWT]*np.ones(len(indexDWT[0]))
-   PC1[indexDWT] = pc1Annual[indexAWT]*np.ones(len(indexDWT[0]))
-   PC2[indexDWT] = pc2Annual[indexAWT]*np.ones(len(indexDWT[0]))
-   PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
-
+with open(r"mwtPCs.pickle", "rb") as input_file:
+    historicalMWTs = pickle.load(input_file)
+dailyPC1 = historicalMWTs['dailyPC1']
+dailyPC2 = historicalMWTs['dailyPC2']
+dailyPC3 = historicalMWTs['dailyPC3']
+dailyPC4 = historicalMWTs['dailyPC4']
+dailyDates = historicalMWTs['dailyDates']
+awt_bmus = historicalMWTs['mwt_bmus']
+seasonalTime = historicalMWTs['seasonalTime']
+dailyMWT = historicalMWTs['dailyMWT']
 
 
 # AWT: PCs (Generated with copula simulation. Annual data, parse to daily)
 xds_PCs_fit = xr.Dataset(
     {
-        'PC1': (('time',), PC1),
-        'PC2': (('time',), PC2),
-        'PC3': (('time',), PC3),
+        'PC1': (('time',), dailyPC1),
+        'PC2': (('time',), dailyPC3),
+        'PC3': (('time',), dailyPC3),
+        'PC4': (('time',), dailyPC4),
     },
-    coords = {'time': [datetime(r[0],r[1],r[2]) for r in timeDWTs]}
+    coords = {'time': [datetime(r[0],r[1],r[2]) for r in dailyDates]}
 )
 # reindex annual data to daily data
 xds_PCs_fit = xr_daily(xds_PCs_fit)
 
 
-
-
-naoTIME = naoTime[353:]
-data = nao[353:]
-naoShort = data
-
-bins = np.linspace(np.min(data)-.05, np.max(data)+.05, 7)
-digitized = np.digitize(data, bins)
-bin_means = [data[digitized == i].mean() for i in range(1, len(bins))]
-
-
-years = np.arange(1979,2022)
-months = np.arange(1,13)
-awtYears = np.arange(1880,2021)
-
-
-digitShort = digitized#[353:]
-
-
-naoTIME.append(datetime.date(2021,6,1))
-naoDailyBmus = np.nan * np.ones(np.shape(bmus))
-naoDaily = np.nan * np.ones(np.shape(bmus))
-for hh in range(len(naoTIME)-1):
-    #for mm in months:
-        # indexDWT = np.where((np.asarray(bmus_dates) >= datetime.date(hh,6,1)) & (np.asarray(bmus_dates) <= datetime.date(hh+1,6,1)))
-    indexDWT = np.where((np.asarray(bmus_dates) >= naoTIME[hh]) & (np.asarray(bmus_dates) <= naoTIME[hh+1]))
-    #indexAWT = np.where((awtYears == hh))
-    naoDaily[indexDWT] = naoShort[hh]*np.ones(len(indexDWT[0]))
-    naoDailyBmus[indexDWT] = digitShort[hh]*np.ones(len(indexDWT[0]))
-
-
+### NAO AS AN INDEX
+#
+# with open('/home/dylananderson/projects/duckGeomorph/NAO2021.txt', 'r') as fd:
+#     c = 0
+#     dataNAO = list()
+#     for line in fd:
+#         splitLine = line.split(',')
+#         secondSplit = splitLine[1].split('/')
+#         dataNAO.append(float(secondSplit[0]))
+# nao = np.asarray(dataNAO)
+#
+# dt = datetime.date(1950, 1, 1)
+# end = datetime.date(2021, 6, 1)
+# #step = datetime.timedelta(months=1)
+# step = relativedelta(months=1)
+# naoTime = []
+# while dt < end:
+#     naoTime.append(dt)#.strftime('%Y-%m-%d'))
+#     dt += step
+#
+# naoTIME = naoTime[353:]
+# data = nao[353:]
+# naoShort = data
+#
+# bins = np.linspace(np.min(data)-.05, np.max(data)+.05, 7)
+# digitized = np.digitize(data, bins)
+# bin_means = [data[digitized == i].mean() for i in range(1, len(bins))]
+#
+#
+# years = np.arange(1979,2022)
+# months = np.arange(1,13)
+# awtYears = np.arange(1880,2021)
+#
+#
+# digitShort = digitized#[353:]
+#
+#
+# naoTIME.append(datetime.date(2021,6,1))
+# naoDailyBmus = np.nan * np.ones(np.shape(bmus))
+# naoDaily = np.nan * np.ones(np.shape(bmus))
+# for hh in range(len(naoTIME)-1):
+#     #for mm in months:
+#         # indexDWT = np.where((np.asarray(bmus_dates) >= datetime.date(hh,6,1)) & (np.asarray(bmus_dates) <= datetime.date(hh+1,6,1)))
+#     indexDWT = np.where((np.asarray(bmus_dates) >= naoTIME[hh]) & (np.asarray(bmus_dates) <= naoTIME[hh+1]))
+#     #indexAWT = np.where((awtYears == hh))
+#     naoDaily[indexDWT] = naoShort[hh]*np.ones(len(indexDWT[0]))
+#     naoDailyBmus[indexDWT] = digitShort[hh]*np.ones(len(indexDWT[0]))
+#
+#
 
 
 
@@ -252,14 +263,15 @@ cov_PCs = xds_PCs_fit.sel(time=slice(d_covars_fit[0],d_covars_fit[-1]))
 cov_1 = cov_PCs.PC1.values.reshape(-1,1)
 cov_2 = cov_PCs.PC2.values.reshape(-1,1)
 cov_3 = cov_PCs.PC3.values.reshape(-1,1)
+cov_4 = cov_PCs.PC4.values.reshape(-1,1)
 
 # MJO covars
 cov_MJO = xds_MJO_fit.sel(time=slice(d_covars_fit[0],d_covars_fit[-1]))
-cov_4 = cov_MJO.rmm1.values.reshape(-1,1)
-cov_5 = cov_MJO.rmm2.values.reshape(-1,1)
+cov_5 = cov_MJO.rmm1.values.reshape(-1,1)
+cov_6 = cov_MJO.rmm2.values.reshape(-1,1)
 
 # join covars and norm.
-cov_T = np.hstack((cov_1, cov_2, cov_3, cov_4, cov_5))
+cov_T = np.hstack((cov_1, cov_2, cov_3, cov_4, cov_5, cov_6))
 
 # KMA related covars starting at KMA period
 i0 = d_covars_fit.index(x2d(xds_KMA_fit.time[0]))
@@ -267,7 +279,7 @@ cov_KMA = cov_T[i0:,:]
 d_covars_fit = d_covars_fit[i0:]
 
 # generate xarray.Dataset
-cov_names = ['PC1', 'PC2', 'PC3', 'MJO1', 'MJO2']
+cov_names = ['PC1', 'PC2', 'PC3', 'PC4', 'MJO1', 'MJO2']
 xds_cov_fit = xr.Dataset(
     {
         'cov_values': (('time','cov_names'), cov_T),
@@ -299,7 +311,7 @@ xds_bmus_fit = xds_KMA_fit.sel(
 num_clusters = 70
 sim_num = 100
 fit_and_save = True # False for loading
-p_test_ALR = '/media/dylananderson/Elements/NC_climate/testALR/'
+p_test_ALR = '/media/dylananderson/Elements1/NC_climate/testALR/'
 
 # ALR terms
 d_terms_settings = {
@@ -325,7 +337,7 @@ ALRW.Report_Fit() #'/media/dylananderson/Elements/NC_climate/testALR/r_Test', te
 
 
 # ALR model simulations
-sim_years = 41
+sim_years = 42
 # start simulation at PCs available data
 d1 = x2d(xds_cov_fit.time[0])
 d2 = datetime(d1.year+sim_years, d1.month, d1.day)
@@ -339,16 +351,16 @@ print('ALR model sim   : {0} --- {1}'.format(
 
 # launch simulation
 xds_ALR = ALRW.Simulate(
-    sim_num, dates_sim, xds_cov_fit)
+    sim_num, dates_sim[0:-2], xds_cov_fit)
 
-
+dates_sim = dates_sim[0:-2]
 
 
 # Save results for matlab plot
 evbmus_sim = xds_ALR.evbmus_sims.values
 # evbmus_probcum = xds_ALR.evbmus_probcum.values
 
-p_mat_output = ('/media/dylananderson/Elements/NC_climate/testALR/test_y{0}s{1}.h5'.format(
+p_mat_output = ('/media/dylananderson/Elements1/NC_climate/testALR/testWithMWT_y{0}s{1}.h5'.format(
         sim_years, sim_num))
 import h5py
 with h5py.File(p_mat_output, 'w') as hf:
@@ -371,7 +383,20 @@ def GenOneYearDaily(yy=1981, month_ini=1):
 
    return [dp1 + timedelta(days=i) for i in range((dp2 - dp1).days)]
 
+
+def GenOneSeasonDaily(yy=1981, month_ini=1):
+   'returns one generic year in a list of datetimes. Daily resolution'
+
+   dp1 = datetime(yy, month_ini, 1)
+   dp2 = dp1 + timedelta(3*360/12)
+
+   return [dp1 + timedelta(days=i) for i in range((dp2 - dp1).days)]
+
+
+
 import matplotlib.pyplot as plt
+
+
 
 bmus_dates_months = np.array([d.month for d in dates_sim])
 bmus_dates_days = np.array([d.day for d in dates_sim])
@@ -426,6 +451,117 @@ ax.xaxis.set_major_locator(months)
 ax.xaxis.set_major_formatter(monthsFmt)
 ax.set_ylim(0, 100)
 ax.set_ylabel('')
+
+
+from matplotlib import gridspec
+
+# Lets get complicated...
+# a grid, 8 x 4 for the 8 SWTs and the 4 seasons?
+# generate perpetual seasonal list
+fig = plt.figure()
+gs = gridspec.GridSpec(1, 4, wspace=0.1, hspace=0.15)
+
+monthsIni = [3,6,9,12]
+c = 0
+for m in monthsIni:
+
+    list_pSeason = GenOneSeasonDaily(month_ini=m)
+    m_plot = np.zeros((70, len(list_pSeason))) * np.nan
+    num_clusters=70
+    num_sim=1
+    # sort data
+    for i, dpy in enumerate(list_pSeason):
+        _, s = np.where([(bmus_dates_months == dpy.month) & (bmus_dates_days == dpy.day)])
+        b = evbmus_sim[s,:]
+        # b = bmus[s]
+        b = b.flatten()
+
+        for j in range(num_clusters):
+            _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
+
+            m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
+
+    ax = plt.subplot(gs[c])
+    # plot stacked bars
+    bottom_val = np.zeros(m_plot[1, :].shape)
+    for r in range(num_clusters):
+        row_val = m_plot[r, :]
+        ax.bar(list_pSeason, row_val, bottom=bottom_val,width=1, color=np.array([dwtcolors[r]]))
+
+        # store bottom
+        bottom_val += row_val
+    # customize  axis
+    months = mdates.MonthLocator()
+    monthsFmt = mdates.DateFormatter('%b')
+    ax.set_xlim(list_pSeason[0], list_pSeason[-1])
+    ax.xaxis.set_major_locator(months)
+    ax.xaxis.set_major_formatter(monthsFmt)
+    ax.set_ylim(0, 100)
+    ax.set_ylabel('')
+    c = c + 1
+
+
+dailyMWT = dailyMWT[0:-2]
+
+evbmus_sim = evbmus_sim - 1
+
+fig = plt.figure()
+gs = gridspec.GridSpec(8, 4, wspace=0.1, hspace=0.15)
+c = 0
+for awt in np.unique(awt_bmus):
+
+    ind = np.where((dailyMWT == awt))[0][:]
+    timeSubDays = bmus_dates_days[ind]
+    timeSubMonths = bmus_dates_months[ind]
+    a = evbmus_sim[ind,:]
+
+    monthsIni = [3,6,9,12]
+    for m in monthsIni:
+
+        list_pSeason = GenOneSeasonDaily(month_ini=m)
+        m_plot = np.zeros((70, len(list_pSeason))) * np.nan
+        num_clusters=70
+        num_sim=1
+        # sort data
+        for i, dpy in enumerate(list_pSeason):
+            _, s = np.where([(timeSubMonths == dpy.month) & (timeSubDays == dpy.day)])
+            b = a[s,:]
+            # b = bmus[s]
+            b = b.flatten()
+            if len(b) > 0:
+                for j in range(num_clusters):
+                    # _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
+                    _, bb = np.where([(j == b)])  # j starts at 0 bmus value!
+
+                    m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
+
+
+        # indNan = np.where(np.isnan(m_plot))[0][:]
+        # if len(indNan) > 0:
+        #     m_plot[indNan] = np.ones((len(indNan),))
+        #m_plot = m_plot[1:,:]
+        ax = plt.subplot(gs[c])
+        # plot stacked bars
+        bottom_val = np.zeros(m_plot[1, :].shape)
+        for r in range(num_clusters):
+            row_val = m_plot[r, :]
+            indNan = np.where(np.isnan(row_val))[0][:]
+            if len(indNan) > 0:
+                row_val[indNan] = 0
+            ax.bar(list_pSeason, row_val, bottom=bottom_val,width=1, color=np.array([dwtcolors[r]]))
+
+            # store bottom
+            bottom_val += row_val
+        # customize  axis
+        months = mdates.MonthLocator()
+        monthsFmt = mdates.DateFormatter('%b')
+        ax.set_xlim(list_pSeason[0], list_pSeason[-1])
+        ax.xaxis.set_major_locator(months)
+        ax.xaxis.set_major_formatter(monthsFmt)
+        ax.set_ylim(0, 100)
+        ax.set_ylabel('')
+        c = c + 1
+
 
 
 

@@ -97,7 +97,9 @@ X_in = SLPs['X_in']
 Y_in = SLPs['Y_in']
 SLP = SLPs['slp_mem']
 SLPtime = SLPs['time']
-
+sea = SLPs['sea_sq']
+XRsq = SLPs['XRsq']
+YRsq = SLPs['YRsq']
 # Applying PC to the those such that every day has a value in the first couple PCs..
 SlpGrd = SLP
 SlpMean = np.mean(SLP,axis=0)
@@ -174,10 +176,10 @@ dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 # bmus_dates = bmus_dates[120:]
 bmus_dates = timeDWTs[120:,:]
 bmus = bmus[120:]
-# SLPtime = SLPtime[151:]
-# PCs = PCs[151:,:]
-SLPtime = SLPtime[120:]
-PCs = PCs[120:,:]
+SLPtime = SLPtime[151:]
+PCs = PCs[151:,:]
+# SLPtime = SLPtime[120:]
+# PCs = PCs[120:,:]
 
 DailyPCs = PCs
 DailyDatesMatrix = bmus_dates
@@ -258,7 +260,6 @@ awt_bmus = kmeans.fit_predict(data)
 
 
 
-
 fig = plt.figure(figsize=[14, 9])
 gs2 = gridspec.GridSpec(n_components + 1, 1)
 for nn in range(n_components):
@@ -271,4 +272,61 @@ for nn in range(n_components):
 
 ax2 = fig.add_subplot(gs2[nn + 1])
 ax2.plot(np.unique(DailyDatesMatrix[:,0])[:-1], awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
+
+
+
+
+dailyAWT = np.ones((len(DailySortedBmus),))
+for i in range(len(awt_bmus)):
+    s = np.where((DailyDatesMatrix[:,0] == np.unique(DailyDatesMatrix[:,0])[i]) & (DailyDatesMatrix[:,1] == 6))
+    ss = np.where((DailyDatesMatrix[:,0] == np.unique(DailyDatesMatrix[:,0])[i] + 1) & (DailyDatesMatrix[:,1] == 5))
+    dailyAWT[s[0][0]:ss[0][-1]+1] = awt_bmus[i]*dailyAWT[s[0][0]:ss[0][-1]+1]
+
+
+
+
+awtSLPs = SLP[120:,:]/100 - np.mean(SLP[120:,:],axis=0)/100
+fig = plt.figure(figsize=(10, 6))
+
+gs1 = gridspec.GridSpec(2, 3)
+gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
+for i in range(len(np.unique(awt_bmus))):
+
+    m, n = np.shape(XRsq)
+    ind = np.where((dailyAWT == i))
+    avgSLP = np.mean(awtSLPs[ind[0],:],axis=0)
+    wt = np.nan * np.ones((m*n,))
+    for j in range(len(avgSLP)):
+        wt[sea[j]-1] = avgSLP[j]
+    spatialField = wt.reshape(n,m)
+
+    ax = plt.subplot(gs1[i])
+    # ax = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=1)
+    clevels = np.arange(-9, 9, 1)
+
+    m = Basemap(projection='merc', llcrnrlat=-5, urcrnrlat=55, llcrnrlon=255, urcrnrlon=360, lat_ts=10, resolution='c')
+    m.fillcontinents(color=[0.5,0.5,0.5])
+    cx, cy = m(XRsq, YRsq)
+    m.drawcoastlines()
+    # m.bluemarble()
+    CS = m.contourf(cx, cy, spatialField.T, clevels, vmin=-9, vmax=9, cmap=cm.RdBu_r, shading='gouraud')
+    tx, ty = m(320, -0)
+    parallels = np.arange(0,360,10)
+    # m.drawparallels(parallels,labels=[True,True,True,False],textcolor='white')
+    m.drawparallels(parallels,labels=[False,False,False,False],textcolor='white')
+
+    # ax.text(tx, ty, '{}'.format((group_size[num])))
+    meridians = np.arange(0,360,20)
+    # m.drawmeridians(meridians,labels=[True,True,True,True],textcolor='white')
+    m.drawmeridians(meridians,labels=[False,False,False,False],textcolor='white')
+
+    fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([0.88, 0.1, 0.02, 0.8])
+    cbar = fig.colorbar(CS, cax=cbar_ax)
+    cbar.set_label('SLP (mbar)')
+    #    cb = plt.colorbar(CS)
+    cbar.set_clim(-9.0, 9.0)
+
+
+
 

@@ -89,16 +89,65 @@ def dt2cal(dt):
     return out
 
 
+def ClusterProbabilities(series, set_values):
+    'return series probabilities for each item at set_values'
+
+    us, cs = np.unique(series, return_counts=True)
+    d_count = dict(zip(us,cs))
+
+    # cluster probabilities
+    cprobs = np.zeros((len(set_values)))
+    for i, c in enumerate(set_values):
+       cprobs[i] = 1.0*d_count[c]/len(series) if c in d_count.keys() else 0.0
+
+    return cprobs
+
+
+
+def axplot_WT_Probs(ax, wt_probs,
+                     ttl = '', vmin = 0, vmax = 0.1,
+                     cmap = 'Blues', caxis='black'):
+    'axes plot WT cluster probabilities'
+
+    # clsuter transition plot
+    pc = ax.pcolor(
+        np.flipud(wt_probs),
+        cmap=cmap, vmin=vmin, vmax=vmax,
+        edgecolors='k',
+    )
+
+    # customize axes
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title(ttl, {'fontsize':10, 'fontweight':'bold'})
+
+    # axis color
+    plt.setp(ax.spines.values(), color=caxis)
+    plt.setp(
+        [ax.get_xticklines(), ax.get_yticklines()],
+        color=caxis,
+    )
+
+    # axis linewidth
+    if caxis != 'black':
+        plt.setp(ax.spines.values(), linewidth=3)
+
+    return pc
+
+
 
 # loading in a North Atlantic continuous SLP record without any of the memory built into it
 # SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_bigger.mat')
 SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
+# SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_bigger_area_rect.mat')
 
 X_in = SLPs['X_in']
 Y_in = SLPs['Y_in']
 SLP = SLPs['slp_mem']
 SLPtime = SLPs['time']
 sea = SLPs['sea_sq']
+# M,N = np.shape(X_in)
+# sea = np.arange(0,N*M)
 XRsq = SLPs['XRsq']
 YRsq = SLPs['YRsq']
 # Applying PC to the those such that every day has a value in the first couple PCs..
@@ -177,10 +226,10 @@ dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 # bmus_dates = bmus_dates[120:]
 bmus_dates = timeDWTs[120:,:]
 bmus = bmus[120:]
-# SLPtime = SLPtime[151:]
-# PCs = PCs[151:,:]
-SLPtime = SLPtime[120:]
-PCs = PCs[120:,:]
+SLPtime = SLPtime[151:]
+PCs = PCs[151:,:]
+# SLPtime = SLPtime[120:]
+# PCs = PCs[120:,:]
 
 DailyPCs = PCs
 DailyDatesMatrix = bmus_dates
@@ -295,22 +344,23 @@ normPC4 = np.divide(tempPC4,np.nanmax(tempPC4))*npercent[3]
 normPC5 = np.divide(tempPC5,np.nanmax(tempPC5))*npercent[4]
 normPC6 = np.divide(tempPC6,np.nanmax(tempPC6))*npercent[5]
 
-pcAggregates = np.full((len(normPC1),5),np.nan)
+
+
+n_components = 4 # !!!!
+
+pcAggregates = np.full((len(normPC1),n_components),np.nan)
 pcAggregates[:,0] = normPC1
 pcAggregates[:,1] = normPC2
 pcAggregates[:,2] = normPC3
 pcAggregates[:,3] = normPC4
-pcAggregates[:,4] = normPC5
+# pcAggregates[:,4] = normPC5
 # pcAggregates[:,5] = normPC6
-
-
 
 
 n_clusters = 8
 
 kmeans = KMeans(n_clusters, init='k-means++', random_state=100)  # 80
 
-n_components = 5 # !!!!
 data = pcAggregates#[:, 0:n_components]
 
 #    data1=data/np.std(data,axis=0)
@@ -336,6 +386,11 @@ ax2.plot(seasonalTime, awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color=
 
 
 dailyAWT = np.ones((len(DailySortedBmus),))
+dailyPC1 = np.ones((len(DailySortedBmus),))
+dailyPC2 = np.ones((len(DailySortedBmus),))
+dailyPC3 = np.ones((len(DailySortedBmus),))
+dailyPC4 = np.ones((len(DailySortedBmus),))
+
 for i in range(len(awt_bmus)):
     sSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == seasonalTime[i].month) & (DailyDatesMatrix[:, 2] == 1))
     if i == 167:
@@ -347,6 +402,10 @@ for i in range(len(awt_bmus)):
             ssSeason = np.where((DailyDatesMatrix[:, 0] == (seasonalTime[i].year + 1)) & (DailyDatesMatrix[:, 1] == 3) & (DailyDatesMatrix[:, 2] == 1))
 
     dailyAWT[sSeason[0][0]:ssSeason[0][0]+1] = awt_bmus[i]*dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]
+    dailyPC1[sSeason[0][0]:ssSeason[0][0]+1] = normPC1[i]*dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]
+    dailyPC2[sSeason[0][0]:ssSeason[0][0]+1] = normPC2[i]*dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]
+    dailyPC3[sSeason[0][0]:ssSeason[0][0]+1] = normPC3[i]*dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]
+    dailyPC4[sSeason[0][0]:ssSeason[0][0]+1] = normPC4[i]*dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]
 
 
 
@@ -395,5 +454,163 @@ for i in range(len(np.unique(awt_bmus))):
 
 
 
+fig10 = plt.figure()
+gs = gridspec.GridSpec(2, 4, wspace=0.1, hspace=0.15)
+
+for i in range(len(np.unique(awt_bmus))):
+    ax = plt.subplot(gs[i])
+    # select DWT bmus at current AWT indexes
+
+    index_1 = np.where((dailyAWT == i))[0][:]
+    sel_2 = DailySortedBmus[index_1]
+    set_2 = np.arange(70)
+
+    cps = ClusterProbabilities(sel_2, set_2)
+    C_T = np.reshape(cps, (10, 7))
+
+    # # axis colors
+    # if wt_colors:
+    #     caxis = cs_wt[ic]
+    # else:
+    caxis = 'black'
+
+    # plot axes
+    axplot_WT_Probs(
+        ax, C_T,
+        ttl='WT {0}'.format(i + 1),
+        cmap='Reds', caxis=caxis,
+    )
+    ax.set_aspect('equal')
+
+
+
+
+totalWTs = np.nan * np.ones((len(np.unique(awt_bmus)),))
+for i in range(len(np.unique(awt_bmus))):
+    # select DWT bmus at current AWT indexes
+    index_1 = np.where((awt_bmus == i))[0][:]
+    totalWTs[i] = len(index_1)
+
+
+
+def ChangeProbabilities(series, set_values):
+    'return series transition count and probabilities'
+
+    # count matrix
+    count = np.zeros((len(set_values), len(set_values)))
+    for ix, c1 in enumerate(set_values):
+        for iy, c2 in enumerate(set_values):
+
+            # count cluster-next_cluster ocurrences
+            us, cs = np.unique((series[:-1]==c1) & (series[1:]==c2), return_counts=True)
+            d_count = dict(zip(us,cs))
+            count[ix, iy] = d_count[True] if True in d_count.keys() else 0
+
+    # probabilities
+    probs = np.zeros((len(set_values), len(set_values)))
+    for ix, _ in enumerate(set_values):
+
+        # calculate each row probability
+        probs[ix,:] = count[ix,:] / np.sum(count[ix, :])
+
+    return count, probs
+
+
+count, probs = ChangeProbabilities(awt_bmus,np.arange(0,8))
+
+fig1 = plt.figure()
+ax = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=1)
+pc = ax.pcolor(np.flipud(probs),vmin=0,vmax=0.5, cmap=cm.Reds)
+ax.set_xticks(np.arange(8) + 0.5)
+ax.set_yticks(np.arange(8) + 0.5)
+ax.set_xticklabels([])
+ax.set_yticklabels([])
+# add colorbar
+cbar = plt.colorbar(pc, ax=ax)
+cbar.ax.tick_params(labelsize=8)
+# if vmin != 0 or vmax != 1:
+#     cbar.set_ticks(np.linspace(vmin, vmax, 6))
+cbar.ax.set_ylabel('transition probability', rotation=270, labelpad=20)
+
+
+with open('/home/dylananderson/projects/duckGeomorph/NAO2021.txt', 'r') as fd:
+    c = 0
+    dataNAO = list()
+    for line in fd:
+        splitLine = line.split(',')
+        secondSplit = splitLine[1].split('/')
+        dataNAO.append(float(secondSplit[0]))
+nao = np.asarray(dataNAO)
+
+dt = datetime.date(1950, 1, 1)
+end = datetime.date(2021, 6, 1)
+#step = datetime.timedelta(months=1)
+step = relativedelta(months=1)
+naoTime = []
+while dt < end:
+    naoTime.append(dt)#.strftime('%Y-%m-%d'))
+    dt += step
+
+naoSub = nao[353:]
+naoTimeSub = naoTime[353:]
+
+
+naoMWT = np.nan * np.ones((len(naoSub),))
+
+for i in range(len(awt_bmus)):
+    indMWT = np.where((awt_bmus == i))
+    mwtTimes = np.asarray(seasonalTime)[indMWT]
+    for j in mwtTimes:
+        naoInd = np.where((j == np.asarray(naoTimeSub)))
+        naoMWT[naoInd[0][0]:naoInd[0][0]+3] = np.ones((3,))*i
+
+from scipy.optimize import curve_fit
+def gaussian(x, mean, amplitude, standard_deviation):
+    return amplitude * np.exp( - (x - mean)**2 / (2*standard_deviation ** 2))
+
+plt.figure()
+gs = gridspec.GridSpec(8, 1, wspace=0.1, hspace=0.15)
+for i in awt_bmus:
+    ax = plt.subplot(gs[i])
+    index = np.where((naoMWT == i))[0][:]
+    ax.hist(naoSub[index],15,color='black')
+    #
+    # bin_heights, bin_borders = np.histogram(naoSub[index], range=[-3.5,3.5], bins=20)
+    # bin_widths = np.diff(bin_borders)
+    # bin_centers = bin_borders[:-1] + bin_widths / 2
+    # popt, _ = curve_fit(gaussian, bin_centers, bin_heights, p0=[1., 0., 1.])
+    #
+    # x_interval_for_fit = np.linspace(bin_borders[0], bin_borders[-1], 100)
+    #
+    # #plt.bar(bin_centers, bin_heights, width=bin_widths, label='histogram')
+    # ax.plot(x_interval_for_fit, gaussian(x_interval_for_fit, *popt), label='fit', c='black')
+    # # plt.legend()
+    ax.set_xlim([-3.5,3.5])
+    # ax.set_ylim([0,12])
+
+
+
+
+
+
+import pickle
+
+mwtPickle = 'mwtPCs.pickle'
+outputMWTs = {}
+outputMWTs['PC1'] = normPC1
+outputMWTs['PC2'] = normPC2
+outputMWTs['PC3'] = normPC3
+outputMWTs['PC4'] = normPC4
+outputMWTs['mwt_bmus'] = awt_bmus
+outputMWTs['seasonalTime'] = seasonalTime
+outputMWTs['dailyMWT'] = dailyAWT
+outputMWTs['dailyDates'] = bmus_dates
+outputMWTs['dailyPC1'] = dailyPC1
+outputMWTs['dailyPC2'] = dailyPC2
+outputMWTs['dailyPC3'] = dailyPC3
+outputMWTs['dailyPC4'] = dailyPC4
+
+with open(mwtPickle,'wb') as f:
+    pickle.dump(outputMWTs, f)
 
 
