@@ -357,7 +357,7 @@ pcAggregates[:,3] = normPC4
 # pcAggregates[:,5] = normPC6
 
 
-n_clusters = 8
+n_clusters = 9
 
 kmeans = KMeans(n_clusters, init='k-means++', random_state=100)  # 80
 
@@ -382,6 +382,11 @@ for nn in range(n_components):
 ax2 = fig.add_subplot(gs2[nn + 1])
 # ax2.plot(np.unique(DailyDatesMatrix[:,0])[:-1], awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
 ax2.plot(seasonalTime, awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
+
+
+
+
+
 
 
 
@@ -412,7 +417,7 @@ for i in range(len(awt_bmus)):
 awtSLPs = SLP[120:,:]/100 - np.mean(SLP[120:,:],axis=0)/100
 fig = plt.figure(figsize=(10, 6))
 
-gs1 = gridspec.GridSpec(2, 4)
+gs1 = gridspec.GridSpec(3, 3)
 gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
 for i in range(len(np.unique(awt_bmus))):
 
@@ -455,7 +460,7 @@ for i in range(len(np.unique(awt_bmus))):
 
 
 fig10 = plt.figure()
-gs = gridspec.GridSpec(2, 4, wspace=0.1, hspace=0.15)
+gs = gridspec.GridSpec(3, 3, wspace=0.1, hspace=0.15)
 
 for i in range(len(np.unique(awt_bmus))):
     ax = plt.subplot(gs[i])
@@ -569,7 +574,7 @@ def gaussian(x, mean, amplitude, standard_deviation):
     return amplitude * np.exp( - (x - mean)**2 / (2*standard_deviation ** 2))
 
 plt.figure()
-gs = gridspec.GridSpec(8, 1, wspace=0.1, hspace=0.15)
+gs = gridspec.GridSpec(9, 1, wspace=0.1, hspace=0.15)
 for i in awt_bmus:
     ax = plt.subplot(gs[i])
     index = np.where((naoMWT == i))[0][:]
@@ -590,12 +595,12 @@ for i in awt_bmus:
 
 
 
-
+asdfg
 
 
 import pickle
 
-mwtPickle = 'mwtPCs.pickle'
+mwtPickle = 'mwtPCs2.pickle'
 outputMWTs = {}
 outputMWTs['PC1'] = normPC1
 outputMWTs['PC2'] = normPC2

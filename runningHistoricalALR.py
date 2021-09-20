@@ -98,7 +98,7 @@ bmus_dates = dateDay2datetimeDate(timeDWTs)
 bmus_dates_months = np.array([d.month for d in bmus_dates])
 bmus_dates_days = np.array([d.day for d in bmus_dates])
 
-bmus = bmus[120:]
+bmus = bmus[120:]+1
 timeDWTs = timeDWTs[120:]
 bmus_dates = bmus_dates[120:]
 
@@ -168,7 +168,7 @@ xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1))
 #    PC2[indexDWT] = pc2Annual[indexAWT]*np.ones(len(indexDWT[0]))
 #    PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
 
-with open(r"mwtPCs.pickle", "rb") as input_file:
+with open(r"mwtPCs2.pickle", "rb") as input_file:
     historicalMWTs = pickle.load(input_file)
 dailyPC1 = historicalMWTs['dailyPC1']
 dailyPC2 = historicalMWTs['dailyPC2']
@@ -388,7 +388,7 @@ def GenOneSeasonDaily(yy=1981, month_ini=1):
    'returns one generic year in a list of datetimes. Daily resolution'
 
    dp1 = datetime(yy, month_ini, 1)
-   dp2 = dp1 + timedelta(3*360/12)
+   dp2 = dp1 + timedelta(3*365/12)
 
    return [dp1 + timedelta(days=i) for i in range((dp2 - dp1).days)]
 
@@ -426,6 +426,48 @@ etcolors = cm.viridis(np.linspace(0, 1, 70-20))
 tccolors = np.flipud(cm.autumn(np.linspace(0,1,21)))
 dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 
+
+
+
+fig = plt.figure()
+ax = plt.subplot2grid((1,1),(0,0))
+# plot stacked bars
+bottom_val = np.zeros(m_plot[1, :].shape)
+for r in range(num_clusters):
+   row_val = m_plot[r, :]
+   ax.bar(list_pyear, row_val, bottom=bottom_val,width=1, color=np.array([dwtcolors[r]]))
+   # store bottom
+   bottom_val += row_val
+
+import matplotlib.dates as mdates
+# customize  axis
+months = mdates.MonthLocator()
+monthsFmt = mdates.DateFormatter('%b')
+ax.set_xlim(list_pyear[0], list_pyear[-1])
+ax.xaxis.set_major_locator(months)
+ax.xaxis.set_major_formatter(monthsFmt)
+ax.set_ylim(0, 100)
+ax.set_ylabel('')
+
+
+
+# generate perpetual year list
+list_pyear = GenOneYearDaily(month_ini=6)
+m_plot = np.zeros((70, len(list_pyear))) * np.nan
+num_clusters=70
+num_sim=1
+# sort data
+for i, dpy in enumerate(list_pyear):
+   _, s = np.where([(bmus_dates_months == dpy.month) & (bmus_dates_days == dpy.day)])
+   # b = evbmus_sim[s,:]
+   b = bmus[s]
+   b = b.flatten()
+
+   for j in range(num_clusters):
+      _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
+
+      m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
+
 fig = plt.figure()
 ax = plt.subplot2grid((1,1),(0,0))
 # plot stacked bars
@@ -434,8 +476,7 @@ for r in range(num_clusters):
    row_val = m_plot[r, :]
    ax.bar(
       list_pyear, row_val, bottom=bottom_val,
-      width=1, color=np.array([dwtcolors[r]])
-   )
+      width=1, color=np.array([dwtcolors[r]]))
 
    # store bottom
    bottom_val += row_val
@@ -449,7 +490,7 @@ monthsFmt = mdates.DateFormatter('%b')
 ax.set_xlim(list_pyear[0], list_pyear[-1])
 ax.xaxis.set_major_locator(months)
 ax.xaxis.set_major_formatter(monthsFmt)
-ax.set_ylim(0, 100)
+ax.set_ylim(0, 1)
 ax.set_ylabel('')
 
 
@@ -503,10 +544,10 @@ for m in monthsIni:
 
 dailyMWT = dailyMWT[0:-2]
 
-evbmus_sim = evbmus_sim - 1
-
+# evbmus_sim = evbmus_sim - 1
+# bmus = bmus + 1
 fig = plt.figure()
-gs = gridspec.GridSpec(8, 4, wspace=0.1, hspace=0.15)
+gs = gridspec.GridSpec(9, 4, wspace=0.1, hspace=0.15)
 c = 0
 for awt in np.unique(awt_bmus):
 
@@ -530,8 +571,8 @@ for awt in np.unique(awt_bmus):
             b = b.flatten()
             if len(b) > 0:
                 for j in range(num_clusters):
-                    # _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
-                    _, bb = np.where([(j == b)])  # j starts at 0 bmus value!
+                    _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
+                    # _, bb = np.where([(j == b)])  # j starts at 0 bmus value!
 
                     m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
 
@@ -561,6 +602,48 @@ for awt in np.unique(awt_bmus):
         ax.set_ylim(0, 100)
         ax.set_ylabel('')
         c = c + 1
+
+
+
+
+# Lets make a plot comparing probabilities in sim vs. historical
+probH = np.nan*np.ones((num_clusters,))
+probS = np.nan * np.ones((sim_num,num_clusters))
+
+for h in np.unique(bmus):
+    findH = np.where((bmus == h))[0][:]
+    probH[int(h-1)] = len(findH)/len(bmus)
+
+    for s in range(sim_num):
+        findS = np.where((evbmus_sim[:,s] == h))[0][:]
+        probS[s,int(h-1)] = len(findS)/len(bmus)
+
+
+
+plt.figure()
+# plt.plot(probH,np.mean(probS,axis=0),'.')
+# plt.plot([0,0.03],[0,0.03],'.--')
+ax = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=1)
+for i in range(70):
+    temp = probS[:,i]
+    temp2 = probH[i]
+    box1 = ax.boxplot(temp,positions=[temp2],widths=.0008,notch=True,patch_artist=True,showfliers=False)
+    plt.setp(box1['boxes'],color=dwtcolors[i])
+    plt.setp(box1['means'],color=dwtcolors[i])
+    plt.setp(box1['fliers'],color=dwtcolors[i])
+    plt.setp(box1['whiskers'],color=dwtcolors[i])
+    plt.setp(box1['caps'],color=dwtcolors[i])
+    plt.setp(box1['medians'],color=dwtcolors[i],linewidth=0)
+
+    #box1['boxes'].set(facecolor=dwtcolors[i])
+    #plt.set(box1['fliers'],markeredgecolor=dwtcolors[i])
+ax.plot([0,0.03],[0,0.03],'k.--', zorder=10)
+plt.xlim([0,0.03])
+plt.ylim([0,0.03])
+plt.xticks([0,0.01,0.02,0.03], ['0','0.01','0.02','0.03'])
+plt.xlabel('Historical Probability')
+plt.ylabel('Simulated Probability')
+plt.title('Validation of ALR DWT Simulations')
 
 
 
