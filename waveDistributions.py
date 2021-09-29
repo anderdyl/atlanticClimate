@@ -10,7 +10,24 @@ from matplotlib import gridspec
 import pickle
 from scipy.io.matlab.mio5_params import mat_struct
 from datetime import datetime, date, timedelta
+import scipy.io as sio
 
+def datenum_to_datetime(datenum):
+    """
+    Convert Matlab datenum into Python datetime.
+    :param datenum: Date in datenum format
+    :return:        Datetime object corresponding to datenum.
+    """
+    days = datenum % 1
+    hours = days % 1 * 24
+    minutes = hours % 1 * 60
+    seconds = minutes % 1 * 60
+    return datetime.fromordinal(int(datenum)) \
+           + timedelta(days=int(days)) \
+           + timedelta(hours=int(hours)) \
+           + timedelta(minutes=int(minutes)) \
+           + timedelta(seconds=round(seconds)) \
+           - timedelta(days=366)
 
 
 def ReadMatfile(p_mfile):

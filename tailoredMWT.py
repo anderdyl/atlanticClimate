@@ -1,7 +1,7 @@
 import scipy.io as sio
 from scipy.io.matlab.mio5_params import mat_struct
 import numpy as np
-import datetime
+from datetime import datetime, date, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
@@ -47,14 +47,32 @@ def dateDay2datetimeDate(d_vec):
    Returns datetime list from a datevec matrix
    d_vec = [[y1 m1 d1 H1 M1],[y2 ,2 d2 H2 M2],..]
    '''
-   return [datetime.date(d[0], d[1], d[2]) for d in d_vec]
+   return [date(d[0], d[1], d[2]) for d in d_vec]
 
 def dateDay2datetimeDatetime(d_vec):
    '''
    Returns datetime list from a datevec matrix
    d_vec = [[y1 m1 d1 H1 M1],[y2 ,2 d2 H2 M2],..]
    '''
-   return [datetime.datetime(d[0], d[1], d[2]) for d in d_vec]
+   return [datetime(d[0], d[1], d[2]) for d in d_vec]
+
+
+def datenum_to_datetime(datenum):
+    """
+    Convert Matlab datenum into Python datetime.
+    :param datenum: Date in datenum format
+    :return:        Datetime object corresponding to datenum.
+    """
+    days = datenum % 1
+    hours = days % 1 * 24
+    minutes = hours % 1 * 60
+    seconds = minutes % 1 * 60
+    return datetime.fromordinal(int(datenum)) \
+           + timedelta(days=int(days)) \
+           + timedelta(hours=int(hours)) \
+           + timedelta(minutes=int(minutes)) \
+           + timedelta(seconds=round(seconds)) \
+           - timedelta(days=366)
 
 
 
@@ -224,10 +242,18 @@ dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 # Or maybe take January-May away, and Feb-May away from the bmus?
 # bmus_dates = dateDay2datetimeDatetime(timeDWTs)
 # bmus_dates = bmus_dates[120:]
-bmus_dates = timeDWTs[120:,:]
-bmus = bmus[120:]
-SLPtime = SLPtime[151:]
-PCs = PCs[151:,:]
+
+
+# bmus_dates = timeDWTs[120:,:]
+# bmus = bmus[120:]
+# SLPtime = SLPtime[151:]
+# PCs = PCs[151:,:]
+bmus_dates = timeDWTs[28:,:]
+bmus = bmus[28:]
+SLPtime = SLPtime[59:]
+PCs = PCs[59:,:]
+
+
 # SLPtime = SLPtime[120:]
 # PCs = PCs[120:,:]
 
@@ -243,8 +269,8 @@ DailySortedBmus = bmus
 #Dec/Jan/Feb
 #Mar/Apr/May
 
-dt = datetime.date(1979, 6, 1)
-end = datetime.date(2021, 6, 1)
+dt = date(1979, 3, 1)
+end = date(2021, 6, 1)
 #step = datetime.timedelta(months=1)
 step = relativedelta(months=3)
 seasonalTime = []
@@ -257,7 +283,7 @@ s1season = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
 
 for i in range(len(seasonalTime)):
     sSeason = np.where((DailyDatesMatrix[:,0] == seasonalTime[i].year) & (DailyDatesMatrix[:,1] == seasonalTime[i].month) & (DailyDatesMatrix[:,2] == 1))
-    if i == 167:
+    if i == 168:
         ssSeason = np.where(
             (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (
                         DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (
@@ -272,8 +298,8 @@ for i in range(len(seasonalTime)):
                 (DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 3) & (
                             DailyDatesMatrix[:, 2] == 1))
 
-        for j in range(len(np.unique(DailySortedBmus))):
-            s1season[j, i] = len(np.where(DailySortedBmus[sSeason[0][0]:ssSeason[0][-1]] == j)[0])
+    for j in range(len(np.unique(DailySortedBmus))):
+        s1season[j, i] = len(np.where(DailySortedBmus[sSeason[0][0]:ssSeason[0][-1]] == j)[0])
 
 
 
@@ -299,7 +325,7 @@ PC6 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
 # June/June #!!!!
 for i in range(len(seasonalTime)):
     sSeason = np.where((DailyDatesMatrix[:,0] == seasonalTime[i].year) & (DailyDatesMatrix[:,1] == seasonalTime[i].month) & (DailyDatesMatrix[:,2] == 1))
-    if i == 167:
+    if i == 168:
         ssSeason = np.where(
             (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (
                         DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (
@@ -398,7 +424,7 @@ dailyPC4 = np.ones((len(DailySortedBmus),))
 
 for i in range(len(awt_bmus)):
     sSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == seasonalTime[i].month) & (DailyDatesMatrix[:, 2] == 1))
-    if i == 167:
+    if i == 168:
         ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (DailyDatesMatrix[:, 2] == 31))
     else:
         if seasonalTime[i].month < 10:
@@ -414,7 +440,7 @@ for i in range(len(awt_bmus)):
 
 
 
-awtSLPs = SLP[120:,:]/100 - np.mean(SLP[120:,:],axis=0)/100
+awtSLPs = SLP[30:,:]/100 - np.mean(SLP[30:,:],axis=0)/100
 fig = plt.figure(figsize=(10, 6))
 
 gs1 = gridspec.GridSpec(3, 3)
@@ -547,8 +573,8 @@ with open('/home/dylananderson/projects/duckGeomorph/NAO2021.txt', 'r') as fd:
         dataNAO.append(float(secondSplit[0]))
 nao = np.asarray(dataNAO)
 
-dt = datetime.date(1950, 1, 1)
-end = datetime.date(2021, 6, 1)
+dt = date(1950, 1, 1)
+end = date(2021, 6, 1)
 #step = datetime.timedelta(months=1)
 step = relativedelta(months=1)
 naoTime = []
@@ -556,8 +582,8 @@ while dt < end:
     naoTime.append(dt)#.strftime('%Y-%m-%d'))
     dt += step
 
-naoSub = nao[353:]
-naoTimeSub = naoTime[353:]
+naoSub = nao[350:]
+naoTimeSub = naoTime[350:]
 
 
 naoMWT = np.nan * np.ones((len(naoSub),))
@@ -591,6 +617,123 @@ for i in awt_bmus:
     # ax.plot(x_interval_for_fit, gaussian(x_interval_for_fit, *popt), label='fit', c='black')
     # # plt.legend()
     ax.set_xlim([-3.5,3.5])
+    # ax.set_ylim([0,12])
+
+
+
+wls = ReadMatfile('/home/dylananderson/projects/atlanticClimate/frfTideGaugeSerafin2.mat')
+
+tide = wls['dailyData']['tide']
+wl = wls['dailyData']['wl']
+seasonal = wls['dailyData']['seasonal']
+msl = wls['dailyData']['msl']
+mmsla = wls['dailyData']['mmsla']
+dsla = wls['dailyData']['dsla']
+ss = wls['dailyData']['ss']
+timeHourly = wls['dailyData']['hourlyDateVec']
+timeMonthly = wls['dailyData']['monthDateVec']
+mmslaMonth = wls['dailyData']['mmsla_month']
+#
+# MMSL = wls['MMSL']
+# MMSLA = wls['MMSLA']
+# MMSLA_hourly = wls['MMSLA_hourly']
+# MSL = wls['MSL']
+# DSLA = wls['DSLA']
+# climatology = wls['climatology']
+# climatologyDaily = wls['climatologyDaily']
+# hourlyDateVec = wls['hourlyDateVec']
+# monthDateVec = wls['monthDateVec']
+# wl = wls['dat']
+#
+# mmslaChopped = MMSLA[2:]
+#
+
+def hourlyVec2datetime(d_vec):
+   '''
+   Returns datetime list from a datevec matrix
+   d_vec = [[y1 m1 d1 H1 M1],[y2 ,2 d2 H2 M2],..]
+   '''
+   return [datetime(d[0], d[1], d[2], d[3]) for d in d_vec]
+
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
+
+
+timeMMSLA = hourlyVec2datetime(timeMonthly)
+
+
+# timeMMSLAChopped = timeMMSLA[2:]
+#
+timeWL = hourlyVec2datetime(timeHourly)
+#
+# plt.figure()
+# plt.plot(timeWL,climatologyDaily)
+#
+index = np.where((np.isnan(mmslaMonth)))
+MMSLAcopy = mmslaMonth
+MMSLAcopy[index] = 0 * np.ones(len(index[0]))
+smooth = running_mean(MMSLAcopy,9)
+
+#
+plt.figure()
+plt.plot(timeMMSLA,mmslaMonth)
+plt.plot(timeMMSLA[4:-4],smooth)
+
+#
+# tFRF = hourlyVec2datetime(hourlyDateVec)
+# resFRF = wl - MSL - MMSLA_hourly - climatologyDaily
+#
+# plt.figure()
+# plt.plot(tFRF,resFRF)
+
+
+
+
+
+# smslDate = wls['smsDate']
+# smsl = wls['smsl']
+# mmsl = wls['mmsl']
+# timeSMSL = [datenum_to_datetime(int(x)) for x in wls['smsDate']]
+# wlsDatevec = wls['dateVec']
+# wlsDatetime = dateDay2datetimeDatetime(wlsDatevec)
+# wlsLessSLR = wls['lessSLR']
+# wlsResidual = wls['residual']
+# wlsSLR = wls['slr']
+# wlsPred = wls['predictedWL']
+# wlsVerified = wls['verified']
+# #python_datetime = datetime.fromordinal(int(matlab_datenum)) + timedelta(days=matlab_datenum%1) - timedelta(days = 366)
+#
+# plt.figure()
+# ax = plt.subplot2grid((3,1),(0,0),rowspan=1,colspan=1)
+# ax.plot(wlsDatetime,wlsVerified,label='water levvels')
+# ax.plot(wlsDatetime,wlsSLR,label='SLR')
+# ax.legend()
+# ax2 = plt.subplot2grid((3,1),(1,0),rowspan=1,colspan=1)
+# ax2.plot(wlsDatetime,wlsResidual)
+
+
+plt.figure()
+gs = gridspec.GridSpec(3, 3, wspace=0.1, hspace=0.15)
+for i in awt_bmus:
+    ax = plt.subplot(gs[i])
+    index = np.where((naoMWT == i))[0][:]
+    # bins_list = [-0.24,-0.21,-0.18,-0.15,-0.12,-0.09,-0.06,-0.03,0,0.03,0.06,0.09,0.12,0.15,0.18,0.21,0.24]
+    bins_list = [-0.18,-0.16,-0.14,-0.12,-0.1,-0.08,-0.06,-0.04,-0.02,0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18]
+
+    ax.hist(smooth[index],bins=bins_list)
+    #
+    # bin_heights, bin_borders = np.histogram(mmslaChopped[index], range=[-0.25,0.25], bins=16)
+    # bin_widths = np.diff(bin_borders)
+    # bin_centers = bin_borders[:-1] + bin_widths / 2
+    # popt, _ = curve_fit(gaussian, bin_centers, bin_heights, p0=[1., 0., 1.])
+    #
+    # x_interval_for_fit = np.linspace(bin_borders[0], bin_borders[-1], 16)
+    #
+    # #plt.bar(bin_centers, bin_heights, width=bin_widths, label='histogram')
+    # ax.plot(x_interval_for_fit, gaussian(x_interval_for_fit, *popt), label='fit', c='black')
+    # # # plt.legend()
+    ax.set_xlim([-0.25,0.25])
     # ax.set_ylim([0,12])
 
 
