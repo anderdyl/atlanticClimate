@@ -910,19 +910,270 @@ def fitGEVparams(var):
 
     return param_GEV
 
+def Smooth_GEV_Shape(cenEOFs, param):
+    '''
+    Smooth GEV shape parameter (for each KMA cluster) by promediation
+    with neighbour EOFs centroids
+
+    cenEOFs  - (n_clusters, n_features) KMA centroids
+    param    - GEV shape parameter for each KMA cluster
+
+    returns smoothed GEV shape parameter as a np.array (n_clusters)
+    '''
+
+    # number of clusters
+    n_cs = cenEOFs.shape[0]
+
+    # calculate distances (optimized)
+    cenEOFs_b = cenEOFs.reshape(cenEOFs.shape[0], 1, cenEOFs.shape[1])
+    D = np.sqrt(np.einsum('ijk, ijk->ij', cenEOFs-cenEOFs_b, cenEOFs-cenEOFs_b))
+    np.fill_diagonal(D, np.nan)
+
+    # sort distances matrix to find neighbours
+    sort_ord = np.empty((n_cs, n_cs), dtype=int)
+    D_sorted = np.empty((n_cs, n_cs))
+    for i in range(n_cs):
+        order = np.argsort(D[i,:])
+        sort_ord[i,:] = order
+        D_sorted[i,:] = D[i, order]
+
+    # calculate smoothed parameter
+    denom = np.sum(1/D_sorted[:,:4], axis=1)
+    param_c = 0.5 * np.sum(np.column_stack(
+        [
+            param[:],
+            param[sort_ord[:,:4]] * (1/D_sorted[:,:4])/denom[:,None]
+        ]
+    ), axis=1)
+
+    return param_c
 
 
+import statsmodels.api as sm
+from statsmodels.distributions.empirical_distribution import ECDF
+from scipy.interpolate import interp1d
+from scipy.stats import norm, genpareto, t
+from scipy.special import ndtri  # norm inv
 
 
+def ksdensity_CDF(x):
+    '''
+    Kernel smoothing function estimate.
+    Returns cumulative probability function at x.
+    '''
 
-from copula import pyCopula
+    # fit a univariate KDE
+    kde = sm.nonparametric.KDEUnivariate(x)
+    kde.fit()
 
-copulaSims = list()
+    # interpolate KDE CDF at x position (kde.support = x)
+    fint = interp1d(kde.support, kde.cdf)
+
+    return fint(x)
+
+def ksdensity_ICDF(x, p):
+    '''
+    Returns Inverse Kernel smoothing function at p points
+    '''
+
+    # fit a univariate KDE
+    kde = sm.nonparametric.KDEUnivariate(x)
+    kde.fit()
+
+    # interpolate KDE CDF to get support values 
+    fint = interp1d(kde.cdf, kde.support)
+
+    # ensure p inside kde.cdf
+    p[p<np.min(kde.cdf)] = kde.cdf[0]
+    p[p>np.max(kde.cdf)] = kde.cdf[-1]
+
+    return fint(p)
+
+def GeneralizedPareto_CDF(x):
+    '''
+    Generalized Pareto fit
+    Returns cumulative probability function at x.
+    '''
+
+    # fit a generalized pareto and get params
+    shape, _, scale = genpareto.fit(x)
+
+    # get generalized pareto CDF
+    cdf = genpareto.cdf(x, shape, scale=scale)
+
+    return cdf
+
+def GeneralizedPareto_ICDF(x, p):
+    '''
+    Generalized Pareto fit
+    Returns inverse cumulative probability function at p points
+    '''
+
+    # fit a generalized pareto and get params
+    shape, _, scale = genpareto.fit(x)
+
+    # get percent points (inverse of CDF)
+    icdf = genpareto.ppf(p, shape, scale=scale)
+
+    return icdf
+
+def Empirical_CDF(x):
+    '''
+    Returns empirical cumulative probability function at x.
+    '''
+
+    # fit ECDF
+    ecdf = ECDF(x)
+    cdf = ecdf(x)
+
+    return cdf
+
+def Empirical_ICDF(x, p):
+    '''
+    Returns inverse empirical cumulative probability function at p points
+    '''
+
+    # TODO: revisar que el fill_value funcione correctamente
+
+    # fit ECDF
+    ecdf = ECDF(x)
+    cdf = ecdf(x)
+
+    # interpolate KDE CDF to get support values 
+    fint = interp1d(
+        cdf, x,
+        fill_value=(np.nanmin(x), np.nanmax(x)),
+        #fill_value=(np.min(x), np.max(x)),
+        bounds_error=False
+    )
+    return fint(p)
+
+
+def copulafit(u, family='gaussian'):
+    '''
+    Fit copula to data.
+    Returns correlation matrix and degrees of freedom for t student
+    '''
+
+    rhohat = None  # correlation matrix
+    nuhat = None  # degrees of freedom (for t student)
+
+    if family=='gaussian':
+        u[u>=1.0] = 0.999999
+        inv_n = ndtri(u)
+        rhohat = np.corrcoef(inv_n.T)
+
+    elif family=='t':
+        raise ValueError("Not implemented")
+
+        # TODO: no encaja con los datos. no funciona
+        x = np.linspace(np.min(u), np.max(u),100)
+        inv_t = np.ndarray((len(x), u.shape[1]))
+
+        for j in range(u.shape[1]):
+            param = t.fit(u[:,j])
+            t_pdf = t.pdf(x,loc=param[0],scale=param[1],df=param[2])
+            inv_t[:,j] = t_pdf
+
+        # TODO CORRELACION? NUHAT?
+        rhohat = np.corrcoef(inv_n.T)
+        nuhat = None
+
+    else:
+        raise ValueError("Wrong family parameter. Use 'gaussian' or 't'")
+
+    return rhohat, nuhat
+
+def copularnd(family, rhohat, n):
+    '''
+    Random vectors from a copula
+    '''
+
+    if family=='gaussian':
+        mn = np.zeros(rhohat.shape[0])
+        np_rmn = np.random.multivariate_normal(mn, rhohat, n)
+        u = norm.cdf(np_rmn)
+
+    elif family=='t':
+        # TODO
+        raise ValueError("Not implemented")
+
+    else:
+        raise ValueError("Wrong family parameter. Use 'gaussian' or 't'")
+
+    return u
+
+def CopulaSimulation(U_data, kernels, num_sim):
+    '''
+    Fill statistical space using copula simulation
+
+    U_data: 2D nump.array, each variable in a column
+    kernels: list of kernels for each column at U_data (KDE | GPareto)
+    num_sim: number of simulations
+    '''
+
+    # kernel CDF dictionary
+    d_kf = {
+        'KDE' : (ksdensity_CDF, ksdensity_ICDF),
+        'GPareto' : (GeneralizedPareto_CDF, GeneralizedPareto_ICDF),
+        'ECDF' : (Empirical_CDF, Empirical_ICDF),
+    }
+
+    # check kernel input
+    if any([k not in d_kf.keys() for k in kernels]):
+        raise ValueError(
+            'wrong kernel: {0}, use: {1}'.format(
+                kernel, ' | '.join(d_kf.keys())
+            )
+        )
+
+    # normalize: calculate data CDF using kernels
+    U_cdf = np.zeros(U_data.shape) * np.nan
+    ic = 0
+    for d, k in zip(U_data.T, kernels):
+        cdf, _ = d_kf[k]  # get kernel cdf
+        U_cdf[:, ic] = cdf(d)
+        ic += 1
+
+    # fit data CDFs to a gaussian copula
+    rhohat, _ = copulafit(U_cdf, 'gaussian')
+
+    # simulate data to fill probabilistic space
+    U_cop = copularnd('gaussian', rhohat, num_sim)
+
+    # de-normalize: calculate data ICDF
+    U_sim = np.zeros(U_cop.shape) * np.nan
+    ic = 0
+    for d, c, k in zip(U_data.T, U_cop.T, kernels):
+        _, icdf = d_kf[k]  # get kernel icdf
+        U_sim[:, ic] = icdf(d, c)
+        ic += 1
+
+    return U_sim
+
+
+### TODO: copula simulation using GEV params
+
+
+gevCopulaSims = list()
 for i in range(len(np.unique(bmuGroup))):
-    tempCopula = copulaData[i]
-    cop = pyCopula.Copula(tempCopula)
-    samples = cop.gendata(10000)
-    copulaSims.append(samples)
+    tempCopula = np.asarray(copulaData[i])
+    kernels = ['KDE','KDE','KDE','KDE','KDE','KDE',]
+    samples = CopulaSimulation(tempCopula,kernels,10000)
+    gevCopulaSims.append(samples)
+
+
+# from copula import pyCopula
+#
+# copulaSims = list()
+# for i in range(len(np.unique(bmuGroup))):
+#     tempCopula = copulaData[i]
+#     cop = pyCopula.Copula(tempCopula)
+#     samples = cop.gendata(10000)
+#     copulaSims.append(samples)
+
+
+
 
 
 ### TODO: use the historical to develop a new chronology
@@ -1131,51 +1382,79 @@ for i in range(len(np.unique(bmuGroup))):
 
 asdfg
 
-simNum = 0
+simulationsHs = list()
+simulationsTp = list()
+simulationsDm = list()
+simulationsSs = list()
+simulationsTime = list()
 
-simHs = []
-simTp = []
-simDm = []
-simSs = []
-simTime = []
+for simNum in range(50):
 
-for i in range(len(simBmuChopped[simNum])):
-    tempBmu = int(simBmuChopped[simNum][i])
-    randStorm = random.randint(0, 9999)
-    stormDetails = copulaSims[tempBmu][randStorm]
-    durSim = simBmuLengthChopped[simNum][i]
+    simHs = []
+    simTp = []
+    simDm = []
+    simSs = []
+    simTime = []
 
-    simDmNorm = (stormDetails[4] - np.asarray(bmuDataMin)[tempBmu,0]) / (np.asarray(bmuDataMax)[tempBmu,0]-np.asarray(bmuDataMin)[tempBmu,0])
-    simSsNorm = (stormDetails[5] - np.asarray(bmuDataMin)[tempBmu,1]) / (np.asarray(bmuDataMax)[tempBmu,1]-np.asarray(bmuDataMin)[tempBmu,1])
-    test, closeIndex = closest_node([simDmNorm,simSsNorm],np.asarray(bmuDataNormalized)[tempBmu])
-    actualIndex = int(np.asarray(bmuData[tempBmu])[closeIndex,6])
+    for i in range(len(simBmuChopped[simNum])):
+        tempBmu = int(simBmuChopped[simNum][i])
+        randStorm = random.randint(0, 9999)
+        stormDetails = gevCopulaSims[tempBmu][randStorm]
+        durSim = simBmuLengthChopped[simNum][i]
 
-    simHs.append((normalizedHydros[tempBmu][actualIndex]['hsNorm']) * (stormDetails[0]-stormDetails[1]) + stormDetails[1])
-    simTp.append((normalizedHydros[tempBmu][actualIndex]['tpNorm']) * (stormDetails[2]-stormDetails[3]) + stormDetails[3])
-    simDm.append((normalizedHydros[tempBmu][actualIndex]['tpNorm']) + stormDetails[4])
-    simSs.append((normalizedHydros[tempBmu][actualIndex]['ssNorm']) + stormDetails[5])
-    #simTime.append(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim)
-    #dt = np.diff(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim)
-    simTime.append(np.hstack((np.diff(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim), np.diff(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim)[-1])))
-    if len(normalizedHydros[tempBmu][actualIndex]['hsNorm']) < len(normalizedHydros[tempBmu][actualIndex]['timeNorm']):
-        print('Time is shorter than Hs in bmu {}, index {}'.format(tempBmu,actualIndex))
+        simDmNorm = (stormDetails[4] - np.asarray(bmuDataMin)[tempBmu,0]) / (np.asarray(bmuDataMax)[tempBmu,0]-np.asarray(bmuDataMin)[tempBmu,0])
+        simSsNorm = (stormDetails[5] - np.asarray(bmuDataMin)[tempBmu,1]) / (np.asarray(bmuDataMax)[tempBmu,1]-np.asarray(bmuDataMin)[tempBmu,1])
+        test, closeIndex = closest_node([simDmNorm,simSsNorm],np.asarray(bmuDataNormalized)[tempBmu])
+        actualIndex = int(np.asarray(bmuData[tempBmu])[closeIndex,6])
+
+        simHs.append((normalizedHydros[tempBmu][actualIndex]['hsNorm']) * (stormDetails[0]-stormDetails[1]) + stormDetails[1])
+        simTp.append((normalizedHydros[tempBmu][actualIndex]['tpNorm']) * (stormDetails[2]-stormDetails[3]) + stormDetails[3])
+        simDm.append((normalizedHydros[tempBmu][actualIndex]['tpNorm']) + stormDetails[4])
+        simSs.append((normalizedHydros[tempBmu][actualIndex]['ssNorm']) + stormDetails[5])
+        #simTime.append(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim)
+        #dt = np.diff(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim)
+        simTime.append(np.hstack((np.diff(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim), np.diff(normalizedHydros[tempBmu][actualIndex]['timeNorm']*durSim)[-1])))
+        if len(normalizedHydros[tempBmu][actualIndex]['hsNorm']) < len(normalizedHydros[tempBmu][actualIndex]['timeNorm']):
+            print('Time is shorter than Hs in bmu {}, index {}'.format(tempBmu,actualIndex))
+
+    simulationsHs.append(np.hstack(simHs))
+    simulationsTp.append(np.hstack(simTp))
+    simulationsDm.append(np.hstack(simDm))
+    simulationsSs.append(np.hstack(simSs))
+    cumulativeHours = np.cumsum(np.hstack(simTime))
+    newDailyTime = [datetime(1979, 2, 1) + timedelta(days=ii) for ii in cumulativeHours]
+    simulationsTime.append(newDailyTime)
 
 
 
-cumulativeHours = np.cumsum(np.hstack(simTime))
-newDailyTime = [datetime(1979,2,1) + timedelta(days=ii) for ii in cumulativeHours]
-simHsTest = np.hstack(simHs)
+
+
 
 plt.figure()
-plt.plot(newDailyTime,simHsTest)
+ax1 = plt.subplot2grid((4,1),(0,0),rowspan=1,colspan=1)
+# ax1.pcolor(np.asarray(simBmu)[1:1000])
+ax1.plot(simulationsTime[4],simulationsHs[4])
+ax2 = plt.subplot2grid((4,1),(1,0),rowspan=1,colspan=1)
+ax2.plot(simulationsTime[0],simulationsHs[0])
+ax3 = plt.subplot2grid((4,1),(2,0),rowspan=1,colspan=1)
+ax3.plot(simulationsTime[1],simulationsHs[1])
+ax4 = plt.subplot2grid((4,1),(3,0),rowspan=1,colspan=1)
+ax4.plot(simulationsTime[2],simulationsHs[2])
 
 
 
-plt.figure()
-plt.plot(np.asarray(bmuData[tempBmu])[:,4],np.asarray(bmuData[tempBmu])[:,5],'.',color='black')
-plt.plot(stormDetails[4],stormDetails[5],'o',color='red')
-plt.plot(np.asarray(bmuData[tempBmu])[closeIndex,4],np.asarray(bmuData[tempBmu])[closeIndex,5],'.',color='orange')
+# simHsTest = np.hstack(simHs)
+#
+# plt.figure()
+# plt.plot(newDailyTime,simHsTest)
 
+
+#
+# plt.figure()
+# plt.plot(np.asarray(bmuData[tempBmu])[:,4],np.asarray(bmuData[tempBmu])[:,5],'.',color='black')
+# plt.plot(stormDetails[4],stormDetails[5],'o',color='red')
+# plt.plot(np.asarray(bmuData[tempBmu])[closeIndex,4],np.asarray(bmuData[tempBmu])[closeIndex,5],'.',color='orange')
+#
 
 
 
