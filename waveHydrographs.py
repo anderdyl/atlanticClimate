@@ -14,6 +14,15 @@ import random
 import itertools
 import operator
 import scipy.io as sio
+import statsmodels.api as sm
+from statsmodels.distributions.empirical_distribution import ECDF
+from scipy.interpolate import interp1d
+from scipy.stats import norm, genpareto, t
+from scipy.special import ndtri  # norm inv
+import matplotlib.dates as mdates
+from scipy.stats import gumbel_l, genextreme
+from scipy.spatial import distance
+
 
 
 
@@ -784,7 +793,6 @@ for p in range(len(np.unique(bmuGroup))):
 
 
 
-import matplotlib.dates as mdates
 myFmt = mdates.DateFormatter('%d')
 #
 # bmuPlot = 2
@@ -863,7 +871,152 @@ for i in range(len(np.unique(bmuGroup))):
     copulaData.append(dataCop)
 
 
-from scipy.stats import  gumbel_l, genextreme
+
+import pickle
+
+hydrosPickle = 'waveHydrographs.pickle'
+outputHydros = {}
+outputHydros['hydros'] = hydros
+with open(hydrosPickle,'wb') as f:
+    pickle.dump(outputHydros, f)
+
+copPickle = 'hydrographCopulaData.pickle'
+outputCopula = {}
+outputCopula['copulaData'] = copulaData
+with open(copPickle,'wb') as f:
+    pickle.dump(outputCopula, f)
+
+
+historicalPickle = 'historicalData.pickle'
+outputHistorical = {}
+outputHistorical['grouped'] = grouped
+outputHistorical['groupLength'] = groupLength
+outputHistorical['bmuGroup'] = bmuGroup
+outputHistorical['timeGroup'] = timeGroup
+
+with open(historicalPickle,'wb') as f:
+    pickle.dump(outputHistorical, f)
+
+asdfg
+
+import xarray as xr
+
+
+def CDF_Distribution(self, vn, vv, xds_GEV_Par, d_shape, i_wt):
+    '''
+    Switch function: GEV / Empirical / Weibull
+
+    Check variable distribution and calculates CDF
+
+    vn - var name
+    vv - var value
+    i_wt - Weather Type index
+    xds_GEV_Par , d_shape: GEV data used in sigma correlation
+    '''
+
+    # get GEV / EMPIRICAL / WEIBULL variables list
+    vars_GEV = self.vars_GEV
+    vars_EMP = self.vars_EMP
+    vars_WBL = self.vars_WBL
+
+    # switch variable name
+    if vn in vars_GEV:
+
+        # gev CDF
+        sha_g = d_shape[vn][i_wt]
+        loc_g = xds_GEV_Par.sel(parameter='location')[vn].values[i_wt]
+        sca_g = xds_GEV_Par.sel(parameter='scale')[vn].values[i_wt]
+        norm_VV = genextreme.cdf(vv, -1 * sha_g, loc_g, sca_g)
+
+    elif vn in vars_EMP:
+
+        # empirical CDF
+        ecdf = ECDF(vv)
+        norm_VV = ecdf(vv)
+
+    elif vn in vars_WBL:
+
+        # Weibull CDF
+        norm_VV = weibull_min.cdf(vv, *weibull_min.fit(vv))
+
+    return norm_VV
+
+
+def ICDF_Distribution(self, vn, vv, pb, xds_GEV_Par, i_wt):
+    '''
+    Switch function: GEV / Empirical / Weibull
+
+    Check variable distribution and calculates ICDF
+
+    vn - var name
+    vv - var value
+    pb - var simulation probs
+    i_wt - Weather Type index
+    xds_GEV_Par: GEV parameters
+    '''
+
+    # optional empirical var_wt override
+    fv = '{0}_{1}'.format(vn, i_wt + 1)
+    if fv in self.sim_icdf_empirical_override:
+        ppf_VV = Empirical_ICDF(vv, pb)
+        return ppf_VV
+
+    # get GEV / EMPIRICAL / WEIBULL variables list
+    vars_GEV = self.vars_GEV
+    vars_EMP = self.vars_EMP
+    vars_WBL = self.vars_WBL
+
+    # switch variable name
+    if vn in vars_GEV:
+
+        # gev ICDF
+        sha_g = xds_GEV_Par.sel(parameter='shape')[vn].values[i_wt]
+        loc_g = xds_GEV_Par.sel(parameter='location')[vn].values[i_wt]
+        sca_g = xds_GEV_Par.sel(parameter='scale')[vn].values[i_wt]
+        ppf_VV = genextreme.ppf(pb, -1 * sha_g, loc_g, sca_g)
+
+    elif vn in vars_EMP:
+
+        # empirical ICDF
+        ppf_VV = Empirical_ICDF(vv, pb)
+
+    elif vn in vars_WBL:
+
+        # Weibull ICDF
+        ppf_VV = weibull_min.ppf(pb, *weibull_min.fit(vv))
+
+    return ppf_VV
+
+
+def Calc_GEVParams(self, xds_KMA_MS, xds_WVS_MS):
+    '''
+    Fits each WT (KMA.bmus) waves families data to a GEV distribtion
+    Requires KMA and WVS families at storms max. TWL
+
+    Returns xarray.Dataset with GEV shape, location and scale parameters
+    '''
+
+    vars_gev = self.vars_GEV
+    bmus = xds_KMA_MS.bmus.values[:]
+    cenEOFs = xds_KMA_MS.cenEOFs.values[:]
+    n_clusters = len(xds_KMA_MS.n_clusters)
+
+    xds_GEV_Par = xr.Dataset(
+        coords = {
+            'n_cluster' : np.arange(n_clusters)+1,
+            'parameter' : ['shape', 'location', 'scale'],
+        }
+    )
+
+    # Fit each wave family var to GEV distribution (using KMA bmus)
+    for vn in vars_gev:
+        gp_pars = FitGEV_KMA_Frechet(
+            bmus, n_clusters, xds_WVS_MS[vn].values[:])
+
+        xds_GEV_Par[vn] = (('n_cluster', 'parameter',), gp_pars)
+
+    return xds_GEV_Par
+
 
 def fitGEVparams(var):
     '''
@@ -949,12 +1102,6 @@ def Smooth_GEV_Shape(cenEOFs, param):
     return param_c
 
 
-import statsmodels.api as sm
-from statsmodels.distributions.empirical_distribution import ECDF
-from scipy.interpolate import interp1d
-from scipy.stats import norm, genpareto, t
-from scipy.special import ndtri  # norm inv
-
 
 def ksdensity_CDF(x):
     '''
@@ -1033,7 +1180,7 @@ def Empirical_ICDF(x, p):
     Returns inverse empirical cumulative probability function at p points
     '''
 
-    # TODO: revisar que el fill_value funcione correctamente
+    # TODO: build in functionality for a fill_value?
 
     # fit ECDF
     ecdf = ECDF(x)
@@ -1066,7 +1213,7 @@ def copulafit(u, family='gaussian'):
     elif family=='t':
         raise ValueError("Not implemented")
 
-        # TODO: no encaja con los datos. no funciona
+        # TODO:
         x = np.linspace(np.min(u), np.max(u),100)
         inv_t = np.ndarray((len(x), u.shape[1]))
 
@@ -1075,7 +1222,7 @@ def copulafit(u, family='gaussian'):
             t_pdf = t.pdf(x,loc=param[0],scale=param[1],df=param[2])
             inv_t[:,j] = t_pdf
 
-        # TODO CORRELACION? NUHAT?
+        # TODO CORRELATION? NUHAT?
         rhohat = np.corrcoef(inv_n.T)
         nuhat = None
 
@@ -1356,7 +1503,6 @@ for i in range(len(np.unique(bmuGroup))):
     bmuDataStd.append([stdDm,stdSs])
 
 
-from scipy.spatial import distance
 
 def closest_node(node, nodes):
     closest_index = distance.cdist([node], nodes).argmin()
@@ -1378,6 +1524,13 @@ for i in range(len(np.unique(bmuGroup))):
         tempDict['ssNorm'] = (tempHydros[mm]['res']) - tempHydros[mm]['ssMean']
         tempList.append(tempDict)
     normalizedHydros.append(tempList)
+
+
+
+
+
+
+
 
 
 asdfg
@@ -1440,6 +1593,21 @@ ax3 = plt.subplot2grid((4,1),(2,0),rowspan=1,colspan=1)
 ax3.plot(simulationsTime[1],simulationsHs[1])
 ax4 = plt.subplot2grid((4,1),(3,0),rowspan=1,colspan=1)
 ax4.plot(simulationsTime[2],simulationsHs[2])
+
+
+
+
+### TODO: verify wave distributions in each DWT
+
+
+
+
+
+
+
+
+
+
 
 
 
