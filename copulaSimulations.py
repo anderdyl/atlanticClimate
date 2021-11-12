@@ -56,10 +56,6 @@ timeGroup = historicalData['timeGroup']
 
 
 
-
-
-
-
 def CDF_Distribution(self, vn, vv, xds_GEV_Par, d_shape, i_wt):
     '''
     Switch function: GEV / Empirical / Weibull
@@ -530,7 +526,7 @@ def CopulaSimulation(U_data, kernels, num_sim):
     Fill statistical space using copula simulation
 
     U_data: 2D nump.array, each variable in a column
-    kernels: list of kernels for each column at U_data (KDE | GPareto)
+    kernels: list of kernels for each column at U_data (KDE | GPareto | Empirical | GEV)
     num_sim: number of simulations
     '''
 

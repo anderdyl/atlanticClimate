@@ -867,12 +867,84 @@ for i in range(len(np.unique(bmuGroup))):
             print('skipping a Nan in storm surge')
         else:
             dataCop.append(list([tempHydros[kk]['hsMax'],tempHydros[kk]['hsMin'],tempHydros[kk]['tpMax'],
-                       tempHydros[kk]['tpMin'],tempHydros[kk]['dmMean'],tempHydros[kk]['ssMean']]))
+                       tempHydros[kk]['tpMin'],tempHydros[kk]['dmMean'],tempHydros[kk]['ssMean'],kk]))
     copulaData.append(dataCop)
 
 
 
+
+# bmuData = list()
+# for i in range(len(np.unique(bmuGroup))):
+#     tempHydros = hydros[i]
+#     dataCop = []
+#     for kk in range(len(tempHydros)):
+#         if np.isnan(tempHydros[kk]['ssMean']):
+#             print('skipping a Nan in storm surge')
+#         else:
+#             dataCop.append(list([tempHydros[kk]['hsMax'],tempHydros[kk]['hsMin'],tempHydros[kk]['tpMax'],
+#                        tempHydros[kk]['tpMin'],tempHydros[kk]['dmMean'],tempHydros[kk]['ssMean'],kk]))
+#     bmuData.append(dataCop)
+
+
+bmuDataNormalized = list()
+bmuDataMin = list()
+bmuDataMax = list()
+bmuDataStd = list()
+for i in range(len(np.unique(bmuGroup))):
+    maxDm = np.nanmax(np.asarray(copulaData[i])[:,4])
+    minDm = np.nanmin(np.asarray(copulaData[i])[:,4])
+    stdDm = np.nanstd(np.asarray(copulaData[i])[:,4])
+    dmNorm = (np.asarray(copulaData[i])[:,4] - minDm) / (maxDm-minDm)
+    maxSs = np.nanmax(np.asarray(copulaData[i])[:,5])
+    minSs = np.nanmin(np.asarray(copulaData[i])[:,5])
+    stdSs = np.nanstd(np.asarray(copulaData[i])[:,5])
+    ssNorm = (np.asarray(copulaData[i])[:,5] - minSs) / (maxSs-minSs)
+    bmuDataNormalized.append(np.vstack((dmNorm,ssNorm)).T)
+    bmuDataMin.append([minDm,minSs])
+    bmuDataMax.append([maxDm,maxSs])
+    bmuDataStd.append([stdDm,stdSs])
+
+
+#
+# def closest_node(node, nodes):
+#     closest_index = distance.cdist([node], nodes).argmin()
+#     return nodes[closest_index], closest_index
+#
+
+### TODO: Need to normalize all of the hydrographs with respect to time AND magnitude
+
+normalizedHydros = list()
+for i in range(len(np.unique(bmuGroup))):
+    tempHydros = hydros[i]
+    tempList = list()
+    for mm in range(len(tempHydros)):
+        tempDict = dict()
+        tempDict['hsNorm'] = (tempHydros[mm]['hs'] - tempHydros[mm]['hsMin']) / (tempHydros[mm]['hsMax']- tempHydros[mm]['hsMin'])
+        tempDict['tpNorm'] = (tempHydros[mm]['tp'] - tempHydros[mm]['tpMin']) / (tempHydros[mm]['tpMax']- tempHydros[mm]['tpMin'])
+        tempDict['timeNorm'] = np.arange(0,1,1/len(tempHydros[mm]['time']))[0:len(tempDict['hsNorm'])]
+        tempDict['dmNorm'] = (tempHydros[mm]['dm']) - tempHydros[mm]['dmMean']
+        tempDict['ssNorm'] = (tempHydros[mm]['res']) - tempHydros[mm]['ssMean']
+        tempList.append(tempDict)
+    normalizedHydros.append(tempList)
+
+
+
+
+
+
 import pickle
+
+normHydrosPickle = 'normalizedWaveHydrographs.pickle'
+outputHydrosNorm = {}
+outputHydrosNorm['normalizedHydros'] = normalizedHydros
+outputHydrosNorm['bmuDataMin'] = bmuDataMin
+outputHydrosNorm['bmuDataMax'] = bmuDataMax
+outputHydrosNorm['bmuDataStd'] = bmuDataStd
+outputHydrosNorm['bmuDataNormalized'] = bmuDataNormalized
+
+with open(normHydrosPickle,'wb') as f:
+    pickle.dump(outputHydrosNorm, f)
+
 
 hydrosPickle = 'waveHydrographs.pickle'
 outputHydros = {}
