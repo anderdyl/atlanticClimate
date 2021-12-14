@@ -322,6 +322,50 @@ class ALR_WRP(object):
 
         return y_fraq
 
+    def GetFracYearsSWT(self, time):
+        'Returns time in custom year decimal format'
+
+        # fix np.datetime64
+        if not 'year' in dir(time[0]):
+            time_0 = pd.to_datetime(time[0])
+            time_1 = pd.to_datetime(time[-1])
+            time_d = pd.to_datetime(time[1])
+        else:
+            time_0 = time[0]
+            time_1 = time[-1]
+            time_d = time[1]
+
+        # resolution year
+        if time_d.year - time_0.year == 1:
+            return range(time_1.year - time_0.year+1)
+        # resolution season
+        if time_d.month - time_0.month == 3:
+            return np.arange(0,(time_1.year+1)-time_0.year,0.25)
+        # resolution day: get start/end data
+        y0 = time_0.year
+        m0 = time_0.month
+        d0 = time_0.day
+        y1 = time_1.year
+        m1 = time_1.month
+        d1 = time_1.day
+
+        # start "year cicle" at 01/01
+        d_y0 = date(y0, 1, 1)
+
+        # time array
+        d_0 = date(y0, m0, d0)
+        d_1 = date(y1, m1, d1)
+
+        # year_decimal from year start to d1
+        delta_y0 = d_1 - d_y0
+        y_fraq_y0 = np.array(range(delta_y0.days+1))/365.25
+
+        # cut year_decimal from d_0
+        i0 = (d_0-d_y0).days
+        y_fraq = y_fraq_y0[i0:]
+
+        return y_fraq
+
     def FitModel(self, max_iter=1000):
         'Fits ARL model using sklearn'
 
@@ -624,10 +668,12 @@ class ALR_WRP(object):
         evbmus_values = self.xds_bmus_fit.bmus.values
         time_fit = self.xds_bmus_fit.time.values
         mk_order = self.mk_order
+        print('{},{},{}'.format(time_fit[0],time_fit[1],time_fit[2]))
 
         # times at datetime
         if isinstance(time_sim[0], np.datetime64):
             time_sim = [npdt2dt(t) for t in time_sim]
+        print('{},{},{}'.format(time_sim[0],time_sim[1],time_sim[2]))
 
         # print some info
         tf0 = str(time_fit[0])[:10]
@@ -636,9 +682,11 @@ class ALR_WRP(object):
         ts1 = str(time_sim[-1])[:10]
         print('ALR model fit   : {0} --- {1}'.format(tf0, tf1))
         print('ALR model sim   : {0} --- {1}'.format(ts0, ts1))
-
         # generate time yearly fractional array
-        time_yfrac = self.GetFracYears(time_sim)
+        # time_yfrac = self.GetFracYears(time_sim)
+        time_yfrac = self.GetFracYearsSWT(time_sim)
+
+        print('{},{},{}'.format(time_yfrac[0],time_yfrac[1],time_yfrac[2]))
 
         # use a d_terms_settigs copy
         d_terms_settings_sim = self.d_terms_settings.copy()

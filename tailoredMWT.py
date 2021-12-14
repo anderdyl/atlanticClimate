@@ -156,7 +156,7 @@ def axplot_WT_Probs(ax, wt_probs,
 
 # loading in a North Atlantic continuous SLP record without any of the memory built into it
 # SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_bigger.mat')
-SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
+SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
 # SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_bigger_area_rect.mat')
 
 X_in = SLPs['X_in']
