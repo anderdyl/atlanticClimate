@@ -55,23 +55,21 @@ def dateDay2datetime(d_vec):
 
 
 
-# with open(r"dwtsAll6TCTracksClusters.pickle", "rb") as input_file:
+
+
+##### LOADING ALL OF THE DWTS THAT WILL BECOME THE TARGET ########
 with open(r"dwts49Clusters.pickle", "rb") as input_file:
    historicalDWTs = pickle.load(input_file)
 
 timeDWTs = historicalDWTs['SLPtime']
-# outputDWTs['slpDates'] = slpDates
 dwtBmus = historicalDWTs['bmus_corrected']
 
-# with open(r"dwtsOfExtraTropicalDays.pickle", "rb") as input_file:
 with open(r"dwtsOfExtraTropicalDays21Clusters.pickle", "rb") as input_file:
    historicalTWTs = pickle.load(input_file)
-#timeTCs = historicalTWTs['tcDates']
 twtBmus = historicalTWTs['bmus_corrected']
 twtOrder = historicalTWTs['kma_order']
 tcIndices = historicalTWTs['tcIndices']
 TIMEtcs = historicalTWTs['TIMEtcs']
-
 
 timeSLPs = dateDay2datetimeDate(timeDWTs)
 timeTCs = dateDay2datetimeDate(TIMEtcs)
@@ -99,7 +97,7 @@ bmus_dates_months = np.array([d.month for d in bmus_dates])
 bmus_dates_days = np.array([d.day for d in bmus_dates])
 
 
-
+########## BMUS FROM JUNE 1 TO MAY 31
 bmus = bmus[120:]+1
 timeDWTs = timeDWTs[120:]
 bmus_dates = bmus_dates[120:]
@@ -112,28 +110,32 @@ xds_KMA_fit = xr.Dataset(
 )
 
 
+###### LOADING HISTORICAL MJO AND CHOPPING TO 1979 to 2021
 
-
-
-
-# MJO historical: rmm1, rmm2 (first date 1979-01-01 in order to avoid nans)
 dataMJO = ReadMatfile('/media/dylananderson/Elements/NC_climate/mjo_australia_2021.mat')
 
 yearMonth = np.vstack((dataMJO['year'],dataMJO['month']))
 Dates = np.vstack((yearMonth,dataMJO['day']))
-Dates.T
+mjoHistDates = np.array([datetime(r[0],r[1],r[2]) for r in Dates.T])
+
+mjoIndex = np.where((mjoHistDates >= datetime(1979,6,1)) & (mjoHistDates <= datetime(2021,5,31)))
+rmm1Historical = dataMJO['rmm1'][mjoIndex]
+rmm2Historical = dataMJO['rmm2'][mjoIndex]
+mjoDates = mjoHistDates[mjoIndex]
+### TODO: Change mjoDates to a list?
 xds_MJO_fit = xr.Dataset(
     {
-        'rmm1': (('time',), dataMJO['rmm1']),
-        'rmm2': (('time',), dataMJO['rmm2']),
+        'rmm1': (('time',), rmm1Historical),
+        'rmm2': (('time',), rmm2Historical),
     },
-    coords = {'time': [datetime(r[0],r[1],r[2]) for r in Dates.T]}
+    coords = {'time': mjoDates}
 )
 # reindex to daily data after 1979-01-01 (avoid NaN)
-xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1))
+xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1),datetime(2021,5,31))
 
 
-# simulated mjo
+
+###### LOADING AN MJO SIMULATION AND CHOPPING TO the length time of 1979 to 2021
 with open(r"mjoSimulations.pickle", "rb") as input_file:
    simMJOs = pickle.load(input_file)
 mjoBMUSSim = simMJOs['evbmus_sim']
@@ -141,67 +143,20 @@ mjoRMM1Sim = simMJOs['rmm1Sims']
 mjoRMM2Sim = simMJOs['rmm2Sims']
 mjoDatesSim = simMJOs['dates_sim']
 
-xds_MJOs_sim = xr.Dataset(
-    {
-        'rmm1': (('time',), mjoRMM1Sim[1]),
-        'rmm2': (('time',), mjoRMM2Sim[1]),
-    },
-    coords = {'time': mjoDatesSim}#[datetime(r[0],r[1],r[2]) for r in mjoDatesSim]}
-)
-# reindex annual data to daily data
-xds_MJOs_sim = xr_daily(xds_MJOs_sim)
 
+####### LOADING HISTORICAL SWTS AND CHOPPING TO JUNE TO MAY
 
-
-
-
-##### AWT FROM ENSO SSTs
-# with open(r"AWT1880to2020.pickle", "rb") as input_file:
-#    historicalAWTs = pickle.load(input_file)
-# awtClusters = historicalAWTs['clusters']
-# awtPredictor = historicalAWTs['predictor']
-#
-# awtBmus = awtClusters.bmus.values
-# pc1Annual = awtClusters.PCs[:,0]
-# pc2Annual = awtClusters.PCs[:,1]
-# pc3Annual = awtClusters.PCs[:,2]
-#
-#
-# dt = datetime(1880, 6, 1)
-# end = datetime(2021, 6, 1)
-# #step = datetime.timedelta(months=1)
-# step = relativedelta(years=1)
-# sstTime = []
-# while dt < end:
-#     sstTime.append(dt)
-#     dt += step
-#
-# years = np.arange(1979,2021)
-# awtYears = np.arange(1880,2021)
-#
-# awtDailyBmus = np.nan * np.ones(np.shape(bmus))
-# PC1 = np.nan * np.ones(np.shape(bmus))
-# PC2 = np.nan * np.ones(np.shape(bmus))
-# PC3 = np.nan * np.ones(np.shape(bmus))
-#
-# for hh in years:
-#    indexDWT = np.where((np.asarray(bmus_dates) >= date(hh,6,1)) & (np.asarray(bmus_dates) <= date(hh+1,5,31)))
-#    indexAWT = np.where((awtYears == hh))
-#    awtDailyBmus[indexDWT] = awtBmus[indexAWT]*np.ones(len(indexDWT[0]))
-#    PC1[indexDWT] = pc1Annual[indexAWT]*np.ones(len(indexDWT[0]))
-#    PC2[indexDWT] = pc2Annual[indexAWT]*np.ones(len(indexDWT[0]))
-#    PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
 
 with open(r"mwtPCs3.pickle", "rb") as input_file:
     historicalMWTs = pickle.load(input_file)
-dailyPC1 = historicalMWTs['dailyPC1']
-dailyPC2 = historicalMWTs['dailyPC2']
-dailyPC3 = historicalMWTs['dailyPC3']
-dailyPC4 = historicalMWTs['dailyPC4']
-dailyDates = historicalMWTs['dailyDates']
-awt_bmus = historicalMWTs['mwt_bmus']
-seasonalTime = historicalMWTs['seasonalTime']
-dailyMWT = historicalMWTs['dailyMWT']
+dailyPC1 = historicalMWTs['dailyPC1'][92:]
+dailyPC2 = historicalMWTs['dailyPC2'][92:]
+dailyPC3 = historicalMWTs['dailyPC3'][92:]
+dailyPC4 = historicalMWTs['dailyPC4'][92:]
+dailyDates = historicalMWTs['dailyDates'][92:]
+awt_bmus = historicalMWTs['mwt_bmus'][1:]
+seasonalTime = historicalMWTs['seasonalTime'][1:] #### LAST DATE IN THIS IS MARCH 1
+dailyMWT = historicalMWTs['dailyMWT'][92:]
 
 
 # AWT: PCs (Generated with copula simulation. Annual data, parse to daily)
@@ -215,8 +170,9 @@ xds_PCs_fit = xr.Dataset(
     coords = {'time': [datetime(r[0],r[1],r[2]) for r in dailyDates]}
 )
 # reindex annual data to daily data
-xds_PCs_fit = xr_daily(xds_PCs_fit, datetime(1979,6,1))
+xds_PCs_fit = xr_daily(xds_PCs_fit, datetime(1979,6,1), datetime(2021,5,31))
 
+###### LOADING A SIMULATED SWT AND ALIGNING WITH JUNE/MAY and daily values
 # simulated seasonal
 with open(r"swtSimulations.pickle", "rb") as input_file:
    simSWTs = pickle.load(input_file)
@@ -226,36 +182,24 @@ swtPC2 = simSWTs['pc2Sims']
 swtPC3 = simSWTs['pc3Sims']
 swtPC4 = simSWTs['pc4Sims']
 swtDatesSim = simSWTs['dates_sim']
-#swtDatesSim = swtDatesSim.append(date(2122,6,1))
-xds_PCs_sim = xr.Dataset(
-    {
-        'PC1': (('time',), swtPC1[1]),
-        'PC2': (('time',), swtPC2[1]),
-        'PC3': (('time',), swtPC3[1]),
-        'PC4': (('time',), swtPC4[1]),
-    },
-    coords = {'time': [datetime(r.year,r.month,r.day) for r in swtDatesSim]}
-)
-# reindex annual data to daily data
-xds_PCs_sim = xr_daily(xds_PCs_sim,datetime(2022,6,1),datetime(2122,6,1))
 
 
-import matplotlib.pyplot as plt
-plt.figure()
-#plt.plot([datetime(r.year,r.month,r.day) for r in swtDatesSim],swtPC1[0])
-#plt.plot(xds_PCs_sim['time'],xds_PCs_sim['PC1'])
-ax1 = plt.subplot2grid((2,2),(0,0),rowspan=1,colspan=1)
-ax1.plot(xds_PCs_sim['PC1'],xds_PCs_sim['PC2'],'.')
-ax1.plot(historicalMWTs['PC1'],historicalMWTs['PC2'],'.')
-ax2 = plt.subplot2grid((2,2),(1,0),rowspan=1,colspan=1)
-ax2.plot(xds_PCs_sim['PC1'],xds_PCs_sim['PC3'],'.')
-ax2.plot(historicalMWTs['PC1'],historicalMWTs['PC3'],'.')
-ax3 = plt.subplot2grid((2,2),(0,1),rowspan=1,colspan=1)
-ax3.plot(xds_PCs_sim['PC1'],xds_PCs_sim['PC4'],'.')
-ax3.plot(historicalMWTs['PC1'],historicalMWTs['PC4'],'.')
-ax4 = plt.subplot2grid((2,2),(1,1),rowspan=1,colspan=1)
-ax4.plot(xds_PCs_sim['PC2'],xds_PCs_sim['PC3'],'.')
-ax4.plot(historicalMWTs['PC2'],historicalMWTs['PC3'],'.')
+# import matplotlib.pyplot as plt
+# plt.figure()
+# #plt.plot([datetime(r.year,r.month,r.day) for r in swtDatesSim],swtPC1[0])
+# #plt.plot(xds_PCs_sim['time'],xds_PCs_sim['PC1'])
+# ax1 = plt.subplot2grid((2,2),(0,0),rowspan=1,colspan=1)
+# ax1.plot(xds_PCs_sim['PC1'],xds_PCs_sim['PC2'],'.')
+# ax1.plot(historicalMWTs['PC1'],historicalMWTs['PC2'],'.')
+# ax2 = plt.subplot2grid((2,2),(1,0),rowspan=1,colspan=1)
+# ax2.plot(xds_PCs_sim['PC1'],xds_PCs_sim['PC3'],'.')
+# ax2.plot(historicalMWTs['PC1'],historicalMWTs['PC3'],'.')
+# ax3 = plt.subplot2grid((2,2),(0,1),rowspan=1,colspan=1)
+# ax3.plot(xds_PCs_sim['PC1'],xds_PCs_sim['PC4'],'.')
+# ax3.plot(historicalMWTs['PC1'],historicalMWTs['PC4'],'.')
+# ax4 = plt.subplot2grid((2,2),(1,1),rowspan=1,colspan=1)
+# ax4.plot(xds_PCs_sim['PC2'],xds_PCs_sim['PC3'],'.')
+# ax4.plot(historicalMWTs['PC2'],historicalMWTs['PC3'],'.')
 
 
 # --------------------------------------
@@ -264,17 +208,6 @@ ax4.plot(historicalMWTs['PC2'],historicalMWTs['PC3'],'.')
 # available data:
 # model fit: xds_KMA_fit, xds_MJO_fit, xds_PCs_fit
 # model sim: xds_MJO_sim, xds_PCs_sim
-
-d_covars_sim = xcd_daily([xds_MJOs_sim,xds_PCs_sim])
-cov_PCs_sim = xds_PCs_sim.sel(time=slice(d_covars_sim[0],d_covars_sim[-1]))
-cov_1_sim = cov_PCs_sim.PC1.values.reshape(-1,1)
-cov_2_sim = cov_PCs_sim.PC2.values.reshape(-1,1)
-cov_3_sim = cov_PCs_sim.PC3.values.reshape(-1,1)
-cov_4_sim = cov_PCs_sim.PC4.values.reshape(-1,1)
-cov_MJOs_sim = xds_MJOs_sim.sel(time=slice(d_covars_sim[0],d_covars_sim[-1]))
-cov_5_sim = cov_MJOs_sim.rmm1.values.reshape(-1,1)
-cov_6_sim = cov_MJOs_sim.rmm2.values.reshape(-1,1)
-cov_T_sim = np.hstack((cov_1_sim, cov_2_sim, cov_3_sim, cov_4_sim, cov_5_sim, cov_6_sim))
 
 
 # covariates: FIT
@@ -298,11 +231,6 @@ cov_T_std = np.std(cov_T,axis=0)
 multCovT = np.array([0.31804979/0.31804979, 0.16031134/0.31804979, 0.12182678/0.31804979, 0.09111769/0.31804979, 1, 1])
 covTNorm = np.divide(np.subtract(cov_T,cov_T_mean),cov_T_std)
 covTNormalize = np.multiply(covTNorm,multCovT)
-
-covTSimNorm = np.divide(np.subtract(cov_T_sim,np.mean(cov_T_sim,axis=0)),np.std(cov_T_sim,axis=0))
-# covTSimNorm = np.divide(np.subtract(cov_T_sim,cov_T_mean),cov_T_std)
-covTSimNormalize = np.multiply(covTSimNorm,multCovT)
-
 # KMA related covars starting at KMA period
 i0 = d_covars_fit.index(x2d(xds_KMA_fit.time[0]))
 cov_KMA = cov_T[i0:,:]
@@ -320,25 +248,6 @@ xds_cov_fit = xr.Dataset(
     }
 )
 
-# generate xarray.Dataset
-xds_cov_sim = xr.Dataset(
-    {
-        'cov_values': (('time','cov_names'), covTSimNormalize),
-    },
-    coords = {
-        'time': d_covars_sim,
-        'cov_names': cov_names,
-    }
-)
-
-
-
-# --------------------------------------
-# Autoregressive Logistic Regression
-
-# available data:
-# model fit: xds_KMA_fit, xds_cov_sim, num_clusters
-# model sim: xds_cov_sim, sim_num, sim_years
 
 # use bmus inside covariate time frame
 xds_bmus_fit = xds_KMA_fit.sel(
@@ -346,9 +255,10 @@ xds_bmus_fit = xds_KMA_fit.sel(
 )
 
 
+
 # Autoregressive logistic wrapper
 num_clusters = 70
-sim_num = 10
+sim_num = 5
 fit_and_save = True # False for loading
 p_test_ALR = '/media/dylananderson/Elements/NC_climate/testALR/'
 
@@ -361,7 +271,8 @@ d_terms_settings = {
     'covariates': (True, xds_cov_fit),
 }
 
-
+print('ALR model fit   : {0} --- {1}'.format(
+    d_covars_fit[0], d_covars_fit[-1]))
 # Autoregressive logistic wrapper
 ALRW = ALR_WRP(p_test_ALR)
 ALRW.SetFitData(
@@ -370,55 +281,171 @@ ALRW.SetFitData(
 ALRW.FitModel(max_iter=20000)
 
 
-#p_report = op.join(p_data, 'r_{0}'.format(name_test))
+diffSims = 10
+evbmus_sim = np.nan*np.ones((len(dailyPC1)-1,50))
+c = 0
+for simIndex in range(diffSims):
 
-ALRW.Report_Fit() #'/media/dylananderson/Elements/NC_climate/testALR/r_Test', terms_fit==False)
+    rmm1Sim = mjoRMM1Sim[simIndex][0:len(rmm1Historical)]
+    rmm2Sim = mjoRMM2Sim[simIndex][0:len(rmm1Historical)]
 
-
-# # ALR model simulations
-# sim_years = 100
-# # start simulation at PCs available data
-# d1 = x2d(xds_cov_sim.time[0])
-# d2 = datetime(d1.year+sim_years, d1.month, d1.day)
-# dates_sim = [d1 + timedelta(days=i) for i in range((d2-d1).days+1)]
-# dates_sim = dates_sim[0:-2]
-# ALR model simulations
-sim_years = 42
-# start simulation at PCs available data
-d1 = x2d(xds_cov_fit.time[0])
-d2 = datetime(d1.year+sim_years, d1.month, d1.day)
-dates_sim = [d1 + timedelta(days=i) for i in range((d2-d1).days+1)]
-dates_sim = dates_sim[0:-1]
-# print some info
-print('ALR model fit   : {0} --- {1}'.format(
-    d_covars_fit[0], d_covars_fit[-1]))
-# print('ALR model sim   : {0} --- {1}'.format(
-#     dates_sim[0], dates_sim[-1]))
-print('ALR model sim   : {0} --- {1}'.format(
-    d_covars_sim[0], d_covars_sim[-1]))
-
-# launch simulation
-xds_ALR = ALRW.Simulate(
-    sim_num, dates_sim, xds_cov_sim)
-
-# dates_sim = dates_sim[0:-2]
+    xds_MJOs_sim = xr.Dataset(
+        {
+            'rmm1': (('time',), rmm1Sim),
+            'rmm2': (('time',), rmm2Sim),
+        },
+        coords = {'time': mjoDates}#[datetime(r[0],r[1],r[2]) for r in mjoDatesSim]}
+    )
 
 
-# Save results for matlab plot
-evbmus_sim = xds_ALR.evbmus_sims.values
-# evbmus_probcum = xds_ALR.evbmus_probcum.values
 
-p_mat_output = ('/media/dylananderson/Elements/NC_climate/testALR/testFuture_y{0}s{1}.h5'.format(
-        sim_years, sim_num))
-import h5py
-with h5py.File(p_mat_output, 'w') as hf:
-    hf['bmusim'] = evbmus_sim
-    # hf['probcum'] = evbmus_probcum
-    hf['dates'] = np.vstack(
-        ([d.year for d in dates_sim],
-        [d.month for d in dates_sim],
-        [d.day for d in dates_sim])).T
+    swtBMUsim = swtBMUS[simIndex][0:len(awt_bmus)]
+    swtPC1sim = swtPC1[simIndex][0:len(awt_bmus)]
+    swtPC2sim = swtPC2[simIndex][0:len(awt_bmus)]
+    swtPC3sim = swtPC3[simIndex][0:len(awt_bmus)]
+    swtPC4sim = swtPC4[simIndex][0:len(awt_bmus)]
 
+    # trainingDates = mjoDatesSim#[datetime(r[0],r[1],r[2]) for r in dailyDates]
+    trainingDates = [datetime(r[0],r[1],r[2]) for r in dailyDates]
+    dailyAWTsim = np.ones((len(trainingDates),))
+    dailyPC1sim = np.ones((len(trainingDates),))
+    dailyPC2sim = np.ones((len(trainingDates),))
+    dailyPC3sim = np.ones((len(trainingDates),))
+    dailyPC4sim = np.ones((len(trainingDates),))
+
+    dailyDatesSWTyear = np.array([r[0] for r in dailyDates])
+    dailyDatesSWTmonth = np.array([r[1] for r in dailyDates])
+    dailyDatesSWTday = np.array([r[2] for r in dailyDates])
+    normPC1 = swtPC1sim
+    normPC2 = swtPC2sim
+    normPC3 = swtPC3sim
+    normPC4 = swtPC4sim
+
+
+    for i in range(len(awt_bmus)):
+        sSeason = np.where((dailyDatesSWTyear == seasonalTime[i].year) & (dailyDatesSWTmonth == seasonalTime[i].month) & (dailyDatesSWTday == 1))
+        if i == 167:
+            ssSeason = np.where((dailyDatesSWTyear == seasonalTime[i].year) & (dailyDatesSWTmonth == (seasonalTime[i].month + 2)) & (dailyDatesSWTday== 31))
+        else:
+            if seasonalTime[i].month < 10:
+                ssSeason = np.where((dailyDatesSWTyear == seasonalTime[i].year) & (dailyDatesSWTmonth == (seasonalTime[i].month + 3)) & (dailyDatesSWTday == 1))
+            else:
+                ssSeason = np.where((dailyDatesSWTyear == (seasonalTime[i].year + 1)) & (dailyDatesSWTmonth == 3) & (dailyDatesSWTday == 1))
+
+        dailyAWTsim[sSeason[0][0]:ssSeason[0][0]+1] = swtBMUsim[i]*dailyAWTsim[sSeason[0][0]:ssSeason[0][0]+1]
+        dailyPC1sim[sSeason[0][0]:ssSeason[0][0]+1] = normPC1[i]*np.ones(len(dailyAWTsim[sSeason[0][0]:ssSeason[0][0]+1]),)
+        dailyPC2sim[sSeason[0][0]:ssSeason[0][0]+1] = normPC2[i]*np.ones(len(dailyAWTsim[sSeason[0][0]:ssSeason[0][0]+1]),)
+        dailyPC3sim[sSeason[0][0]:ssSeason[0][0]+1] = normPC3[i]*np.ones(len(dailyAWTsim[sSeason[0][0]:ssSeason[0][0]+1]),)
+        dailyPC4sim[sSeason[0][0]:ssSeason[0][0]+1] = normPC4[i]*np.ones(len(dailyAWTsim[sSeason[0][0]:ssSeason[0][0]+1]),)
+
+
+    xds_PCs_sim = xr.Dataset(
+        {
+            'PC1': (('time',), dailyPC1sim),
+            'PC2': (('time',), dailyPC2sim),
+            'PC3': (('time',), dailyPC3sim),
+            'PC4': (('time',), dailyPC4sim),
+        },
+        # coords={'time': mjoDatesSim}
+        # coords = {'time': [datetime(r.year,r.month,r.day) for r in swtDatesSim]}
+        coords = {'time': [datetime(r[0], r[1], r[2]) for r in dailyDates]}
+    )
+
+    # reindex annual data to daily data
+    # xds_PCs_sim = xr_daily(xds_PCs_sim,datetime(2022,6,1),datetime(2122,6,1))
+    xds_PCs_sim = xr_daily(xds_PCs_sim,datetime(1979,6,1),datetime(2021,5,31))
+
+
+
+    d_covars_sim = xcd_daily([xds_MJOs_sim,xds_PCs_sim])
+    cov_PCs_sim = xds_PCs_sim.sel(time=slice(d_covars_sim[0],d_covars_sim[-1]))
+    cov_1_sim = cov_PCs_sim.PC1.values.reshape(-1,1)
+    cov_2_sim = cov_PCs_sim.PC2.values.reshape(-1,1)
+    cov_3_sim = cov_PCs_sim.PC3.values.reshape(-1,1)
+    cov_4_sim = cov_PCs_sim.PC4.values.reshape(-1,1)
+    cov_MJOs_sim = xds_MJOs_sim.sel(time=slice(d_covars_sim[0],d_covars_sim[-1]))
+    cov_5_sim = cov_MJOs_sim.rmm1.values.reshape(-1,1)
+    cov_6_sim = cov_MJOs_sim.rmm2.values.reshape(-1,1)
+    cov_T_sim = np.hstack((cov_1_sim, cov_2_sim, cov_3_sim, cov_4_sim, cov_5_sim, cov_6_sim))
+
+    covTSimNorm = np.divide(np.subtract(cov_T_sim,np.mean(cov_T_sim,axis=0)),np.std(cov_T_sim,axis=0))
+    # covTSimNorm = np.divide(np.subtract(cov_T_sim,cov_T_mean),cov_T_std)
+    covTSimNormalize = np.multiply(covTSimNorm,multCovT)
+
+
+    # generate xarray.Dataset
+    xds_cov_sim = xr.Dataset(
+        {
+            'cov_values': (('time','cov_names'), covTSimNormalize),
+        },
+        coords = {
+            'time': d_covars_sim,
+            'cov_names': cov_names,
+        }
+    )
+
+
+
+    # --------------------------------------
+    # Autoregressive Logistic Regression
+
+    # available data:
+    # model fit: xds_KMA_fit, xds_cov_sim, num_clusters
+    # model sim: xds_cov_sim, sim_num, sim_years
+
+
+    #p_report = op.join(p_data, 'r_{0}'.format(name_test))
+
+    #ALRW.Report_Fit() #'/media/dylananderson/Elements/NC_climate/testALR/r_Test', terms_fit==False)
+
+
+    # # ALR model simulations
+    # sim_years = 100
+    # # start simulation at PCs available data
+    # d1 = x2d(xds_cov_sim.time[0])
+    # d2 = datetime(d1.year+sim_years, d1.month, d1.day)
+    # dates_sim = [d1 + timedelta(days=i) for i in range((d2-d1).days+1)]
+    # dates_sim = dates_sim[0:-2]
+    # ALR model simulations
+    sim_years = 42
+    # start simulation at PCs available data
+    d1 = x2d(xds_cov_sim.time[0])
+    d2 = datetime(d1.year+sim_years, d1.month, d1.day)
+    dates_sim = [d1 + timedelta(days=i) for i in range((d2-d1).days+1)]
+    dates_sim = dates_sim[0:-2]
+    # print some info
+
+    # print('ALR model sim   : {0} --- {1}'.format(
+    #     dates_sim[0], dates_sim[-1]))
+    print('ALR model sim   : {0} --- {1}'.format(
+        d_covars_fit[0], d_covars_fit[-1]))
+
+    # launch simulation
+    xds_ALR = ALRW.Simulate(
+        sim_num, dates_sim, xds_cov_sim)
+
+    # dates_sim = dates_sim[0:-2]
+
+
+    # Save results for matlab plot
+    evbmus_sim[:,c:c+5] = xds_ALR.evbmus_sims.values
+    c = c + 5
+    # evbmus_probcum = xds_ALR.evbmus_probcum.values
+
+
+
+
+# p_mat_output = ('/media/dylananderson/Elements/NC_climate/testALR/testFuture_y{0}s{1}.h5'.format(
+#         sim_years, sim_num))
+# import h5py
+# with h5py.File(p_mat_output, 'w') as hf:
+#     hf['bmusim'] = evbmus_sim
+#     # hf['probcum'] = evbmus_probcum
+#     hf['dates'] = np.vstack(
+#         ([d.year for d in dates_sim],
+#         [d.month for d in dates_sim],
+#         [d.day for d in dates_sim])).T
+#
 
 
 
@@ -452,9 +479,8 @@ bmus_dates_days = np.array([d.day for d in dates_sim])
 
 # generate perpetual year list
 list_pyear = GenOneYearDaily(month_ini=6)
-m_plot = np.zeros((70, len(list_pyear))) * np.nan
-num_clusters=70
-num_sim=1
+m_plot = np.zeros((num_clusters, len(list_pyear))) * np.nan
+numberOfSims = 1
 # sort data
 for i, dpy in enumerate(list_pyear):
    _, s = np.where(
@@ -467,7 +493,7 @@ for i, dpy in enumerate(list_pyear):
    for j in range(num_clusters):
       _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
 
-      m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
+      m_plot[j, i] = float(len(bb) / float(numberOfSims)) / len(s)
 
 import matplotlib.cm as cm
 etcolors = cm.viridis(np.linspace(0, 1, 70-20))
@@ -494,7 +520,7 @@ monthsFmt = mdates.DateFormatter('%b')
 ax.set_xlim(list_pyear[0], list_pyear[-1])
 ax.xaxis.set_major_locator(months)
 ax.xaxis.set_major_formatter(monthsFmt)
-ax.set_ylim(0, 10)
+ax.set_ylim(0, 50)
 ax.set_ylabel('')
 
 
@@ -661,13 +687,13 @@ from matplotlib import gridspec
 
 # Lets make a plot comparing probabilities in sim vs. historical
 probH = np.nan*np.ones((num_clusters,))
-probS = np.nan * np.ones((sim_num,num_clusters))
+probS = np.nan * np.ones((50,num_clusters))
 
 for h in np.unique(bmus):
     findH = np.where((bmus == h))[0][:]
     probH[int(h-1)] = len(findH)/len(bmus)
 
-    for s in range(sim_num):
+    for s in range(50):
         findS = np.where((evbmus_sim[:,s] == h))[0][:]
         probS[s,int(h-1)] = len(findS)/len(evbmus_sim[:,s])
 
@@ -680,7 +706,7 @@ ax = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=1)
 for i in range(70):
     temp = probS[:,i]
     temp2 = probH[i]
-    box1 = ax.boxplot(temp,positions=[temp2],widths=.0008,notch=True,patch_artist=True,showfliers=False)
+    box1 = ax.boxplot(temp,positions=[temp2],widths=.0006,notch=True,patch_artist=True,showfliers=False)
     plt.setp(box1['boxes'],color=dwtcolors[i])
     plt.setp(box1['means'],color=dwtcolors[i])
     plt.setp(box1['fliers'],color=dwtcolors[i])

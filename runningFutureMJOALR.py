@@ -228,7 +228,7 @@ xds_KMA_fit = xr.Dataset(
 #    PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
 
 import pickle
-with open(r"mwtPCs2.pickle", "rb") as input_file:
+with open(r"mwtPCs3.pickle", "rb") as input_file:
     historicalMWTs = pickle.load(input_file)
 dailyPC1 = historicalMWTs['dailyPC1']
 dailyPC2 = historicalMWTs['dailyPC2']
@@ -418,9 +418,9 @@ print('ALR model sim   : {0} --- {1}'.format(
 
 # launch simulation
 xds_ALR = ALRW.Simulate(
-    sim_num, dates_sim[0:-2], xds_cov_fit)
+    sim_num, dates_sim, xds_cov_fit)
 
-dates_sim = dates_sim[0:-2]
+dates_sim = dates_sim
 
 
 # Save results for matlab plot
@@ -1373,6 +1373,9 @@ for kk in range(sim_num):
     rmm1Sims.append(tempRMM1)
     rmm2Sims.append(tempRMM2)
     phaseSims.append(tempPhase)
+
+
+
 
 
 samplesPickle = 'mjoSimulations.pickle'

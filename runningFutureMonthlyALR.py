@@ -161,7 +161,7 @@ def MJO_Categories(rmm1, rmm2, phase):
 
 
 # MJO historical: rmm1, rmm2 (first date 1979-01-01 in order to avoid nans)
-dataMJO = ReadMatfile('/media/dylananderson/Elements/NC_climate/mjo_australia_2021.mat')
+dataMJO = ReadMatfile('/media/dylananderson/Elements1/NC_climate/mjo_australia_2021.mat')
 
 yearMonth = np.vstack((dataMJO['year'],dataMJO['month']))
 Dates = np.vstack((yearMonth,dataMJO['day']))
@@ -225,27 +225,27 @@ mjoBmus, mjoGroups = MJO_Categories(dataMJO['rmm1'],dataMJO['rmm2'],dataMJO['pha
 #    PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
 
 import pickle
-with open(r"mwtPCs3.pickle", "rb") as input_file:
+with open(r"monthlywtPCs.pickle", "rb") as input_file:
     historicalMWTs = pickle.load(input_file)
 dailyPC1 = historicalMWTs['dailyPC1']
 dailyPC2 = historicalMWTs['dailyPC2']
 dailyPC3 = historicalMWTs['dailyPC3']
-dailyPC4 = historicalMWTs['dailyPC4']
+# dailyPC4 = historicalMWTs['dailyPC4']
 dailyDates = historicalMWTs['dailyDates']
 mwt_bmus = historicalMWTs['mwt_bmus']
 seasonalTime = historicalMWTs['seasonalTime']
 dailyMWT = historicalMWTs['dailyMWT']
 
-PC1 = historicalMWTs['PC1'][1:]
-PC2 = historicalMWTs['PC2'][1:]
-PC3 = historicalMWTs['PC3'][1:]
-PC4 = historicalMWTs['PC4'][1:]
+PC1 = historicalMWTs['PC1']#[1:]
+PC2 = historicalMWTs['PC2']#[1:]
+PC3 = historicalMWTs['PC3']#[1:]
+#PC4 = historicalMWTs['PC4'][1:]
 
-seasonTime = [datetime(y.year,y.month,y.day) for y in seasonalTime[1:]]
+seasonTime = [datetime(y.year,y.month,y.day) for y in seasonalTime[0:-1]]
 
 xds_KMA_fit = xr.Dataset(
     {
-        'bmus':(('time',), mwt_bmus[1:]),
+        'bmus':(('time',), mwt_bmus),
     },
     coords = {'time': seasonTime}
     #coords = {'time': [datetime(r[0], r[1], r[2]) for r in dailyDates]}
@@ -275,27 +275,83 @@ for i, key1 in enumerate(mwt_bmus):
 print('Chain size: {0} distinct bmu pairs.'.format(len(chain)))
 
 
+chain3 = {}
+n_words = len(mwt_bmus)
+for i, key1 in enumerate(mwt_bmus):
+    if n_words > i + 3:
+        key2 = mwt_bmus[i + 1]
+        key3 = mwt_bmus[i + 2]
+        word = mwt_bmus[i + 3]
+        if (key1, key2, key3) not in chain3:
+            chain3[(key1, key2, key3)] = [word]
+        else:
+            chain3[(key1, key2, key3)].append(word)
+print('Chain size: {0} distinct bmu pairs.'.format(len(chain3)))
+
+
+chain4 = {}
+n_words = len(mwt_bmus)
+for i, key1 in enumerate(mwt_bmus):
+    if n_words > i + 4:
+        key2 = mwt_bmus[i + 1]
+        key3 = mwt_bmus[i + 2]
+        key4 = mwt_bmus[i + 3]
+        word = mwt_bmus[i + 4]
+        if (key1, key2, key3, key4) not in chain4:
+            chain4[(key1, key2, key3, key4)] = [word]
+        else:
+            chain4[(key1, key2, key3, key4)].append(word)
+print('Chain size: {0} distinct bmu pairs.'.format(len(chain4)))
+
+
+
+asdfg
+
 # r = random.randint(0, len(mwt_bmus) - 1)
 # key = (mwt_bmus[r], mwt_bmus[r + 1])
+# sim_num = 100
+# sim_years = 100
+# evbmus_sim = np.nan*np.ones((sim_num,(sim_years*4+1)))
+# key = (6, 0)
+# for gg in range(sim_num):
+#     bmu_sim = [6, 0]
+#     while len(bmu_sim) < (sim_years*4+1):
+#         w = random.choice(chain[key])
+#         bmu_sim.append(w)
+#         key = (key[1], w)
+#     evbmus_sim[gg,:] = bmu_sim
+# sim_num = 100
+# sim_years = 100
+# evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12+1)))
+# key = (3, 3, 5)
+# for gg in range(sim_num):
+#     bmu_sim = [3, 3, 5]
+#     while len(bmu_sim) < (sim_years*12+1):
+#         w = random.choice(chain3[key])
+#         bmu_sim.append(w)
+#         key = (key[1], key[2], w)
+#     evbmus_sim[gg,:] = bmu_sim
+
 sim_num = 100
 sim_years = 100
-evbmus_sim = np.nan*np.ones((sim_num,(sim_years*4+1)))
-key = (6, 0)
+evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12+1)))
+key = (3, 3, 5, 5)
 for gg in range(sim_num):
-    bmu_sim = [6, 0]
-    while len(bmu_sim) < (sim_years*4+1):
-        w = random.choice(chain[key])
+    bmu_sim = [3, 3, 5, 5]
+    while len(bmu_sim) < (sim_years*12+1):
+        w = random.choice(chain4[key])
         bmu_sim.append(w)
-        key = (key[1], w)
+        key = (key[1], key[2], key[3], w)
     evbmus_sim[gg,:] = bmu_sim
+
 
 # start simulation at PCs available data
 d1 = datetime(2022,6,1)#x2d(xds_cov_fit.time[0])
 d2 = datetime(2022+int(sim_years),6,1)#datetime(d1.year+sim_years, d1.month, d1.day)
 dt = date(2022, 6, 1)
-end = date(2022+int(sim_years), 9, 1)
+end = date(2022+int(sim_years), 7, 1)
 #step = datetime.timedelta(months=1)
-step = relativedelta(months=3)
+step = relativedelta(months=1)
 dates_sim = []
 while dt < end:
     dates_sim.append(dt)#.strftime('%Y-%m-%d'))
@@ -807,9 +863,9 @@ dwtcolors = colors_mjo()
 
 
 
-num_clusters = 9
-sim_num = 20
-bmus = mwt_bmus[1:]
+num_clusters = 12
+sim_num = 100
+bmus = mwt_bmus#[1:]
 evbmus_sim = evbmus_sim#evbmus_simALR.T
 
 # Lets make a plot comparing probabilities in sim vs. historical
@@ -830,8 +886,8 @@ plt.figure()
 # plt.plot(probH,np.mean(probS,axis=0),'.')
 # plt.plot([0,0.03],[0,0.03],'.--')
 ax = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=1)
-tempPs = np.nan*np.ones((9,))
-for i in range(9):
+tempPs = np.nan*np.ones((12,))
+for i in range(12):
     temp = probS[:,i]
     temp2 = probH[i]
     box1 = ax.boxplot(temp,positions=[temp2],widths=.01,notch=True,patch_artist=True,showfliers=False)
@@ -858,7 +914,7 @@ from itertools import groupby
 
 a = list(bmus)
 seq = list()
-for i in np.arange(1,10):
+for i in np.arange(1,13):
     temp = [len(list(v)) for k,v in groupby(a) if k==i-1]
     seq.append(temp)
 
@@ -866,28 +922,28 @@ simseqPers = list()
 for hhh in range(sim_num):
     b = list(evbmus_sim[hhh,:])
     seq_sim = list()
-    for i in np.arange(1,10):
+    for i in np.arange(1,13):
         temp2 = [len(list(v)) for k,v in groupby(b) if k==i-1]
         seq_sim.append(temp2)
     simseqPers.append(seq_sim)
 
-persistReal = np.nan * np.ones((9,3))
-for dwt in np.arange(1,10):
+persistReal = np.nan * np.ones((12,5))
+for dwt in np.arange(1,13):
     sortDurs = np.sort(seq[dwt-1])
-    realPercent = np.nan*np.ones((3,))
-    for qq in np.arange(1,4):
+    realPercent = np.nan*np.ones((5,))
+    for qq in np.arange(1,6):
         realInd = np.where((sortDurs <= qq))
         realPercent[qq-1] = len(realInd[0])/len(sortDurs)
     persistReal[dwt-1,:] = realPercent
 
 persistSim = list()
-for dwt in np.arange(1,10):
-    persistDWT = np.nan * np.ones((sim_num, 3))
+for dwt in np.arange(1,13):
+    persistDWT = np.nan * np.ones((sim_num, 5))
     for simInd in range(sim_num):
 
         sortDursSim = np.sort(simseqPers[simInd][dwt-1])
-        simPercent = np.nan*np.ones((3,))
-        for qq in np.arange(1,4):
+        simPercent = np.nan*np.ones((5,))
+        for qq in np.arange(1,6):
             simIndex = np.where((sortDursSim <= qq))
             simPercent[qq-1] = len(simIndex[0])/len(sortDursSim)
         persistDWT[simInd,:] = simPercent
@@ -904,14 +960,14 @@ for dwt in np.arange(1,10):
 # ax1.plot(x,y,color=dwtcolors[num])
 
 
-x = [0.5,1.5,1.5,2.5,2.5,3.5]
+x = [0.5,1.5,1.5,2.5,2.5,3.5,3.5,4.5,4.5,5.5]
 plt.figure()
-gs2 = gridspec.GridSpec(3, 3)
-for xx in range(9):
+gs2 = gridspec.GridSpec(3, 4)
+for xx in range(12):
     ax = plt.subplot(gs2[xx])
     ax.boxplot(persistSim[xx])
     y = [persistReal[xx, 0], persistReal[xx, 0], persistReal[xx, 1], persistReal[xx, 1], persistReal[xx, 2],
-         persistReal[xx, 2],]
+         persistReal[xx, 2], persistReal[xx, 3], persistReal[xx, 3], persistReal[xx, 4], persistReal[xx, 4],]
     ax.plot(x, y, color=dwtcolors[xx])
     ax.set_ylim([0.55, 1.05])
 
@@ -1444,7 +1500,7 @@ for i in range(len(np.unique(bmus))):
     tempInd = np.where(((bmus)==i))
     dataCop = []
     for kk in range(len(tempInd[0])):
-        dataCop.append(list([PC1[tempInd[0][kk]],PC2[tempInd[0][kk]],PC3[tempInd[0][kk]],PC4[tempInd[0][kk]]]))
+        dataCop.append(list([PC1[tempInd[0][kk]],PC2[tempInd[0][kk]],PC3[tempInd[0][kk]]]))
     copulaData.append(dataCop)
 
 
@@ -1452,7 +1508,7 @@ for i in range(len(np.unique(bmus))):
 gevCopulaSims = list()
 for i in range(len(np.unique(bmus))):
     tempCopula = np.asarray(copulaData[i])
-    kernels = ['KDE','KDE','KDE','KDE']
+    kernels = ['KDE','KDE','KDE']
     samples = CopulaSimulation(tempCopula,kernels,100000)
     print('generating samples for DWT {}'.format(i))
     gevCopulaSims.append(samples)
@@ -1463,13 +1519,13 @@ import random
 pc1Sims = list()
 pc2Sims = list()
 pc3Sims = list()
-pc4Sims = list()
+# pc4Sims = list()
 for kk in range(sim_num):
     tempSimulation = evbmus_sim[kk,:]
     tempPC1 = np.nan*np.ones((np.shape(tempSimulation)))
     tempPC2 = np.nan*np.ones((np.shape(tempSimulation)))
     tempPC3 = np.nan*np.ones((np.shape(tempSimulation)))
-    tempPC4 = np.nan*np.ones((np.shape(tempSimulation)))
+    # tempPC4 = np.nan*np.ones((np.shape(tempSimulation)))
 
     groups = [list(j) for i, j in groupby(tempSimulation)]
     c = 0
@@ -1478,16 +1534,16 @@ for kk in range(sim_num):
         tempPC1s = gevCopulaSims[int(groups[gg][0])][getInds[0], 0]
         tempPC2s = gevCopulaSims[int(groups[gg][0])][getInds[0], 1]
         tempPC3s = gevCopulaSims[int(groups[gg][0])][getInds[0], 2]
-        tempPC4s = gevCopulaSims[int(groups[gg][0])][getInds[0], 3]
+        # tempPC4s = gevCopulaSims[int(groups[gg][0])][getInds[0], 3]
         tempPC1[c:c + len(groups[gg])] = tempPC1s
         tempPC2[c:c + len(groups[gg])] = tempPC2s
         tempPC3[c:c + len(groups[gg])] = tempPC3s
-        tempPC4[c:c + len(groups[gg])] = tempPC4s
+        # tempPC4[c:c + len(groups[gg])] = tempPC4s
         c = c + len(groups[gg])
     pc1Sims.append(tempPC1)
     pc2Sims.append(tempPC2)
     pc3Sims.append(tempPC3)
-    pc4Sims.append(tempPC4)
+    # pc4Sims.append(tempPC4)
 
 
 sim_years = 100
@@ -1498,8 +1554,8 @@ dates_sim2 = [d1 + timedelta(days=i) for i in range((d2-d1).days+1)]
 # dates_sim = dates_sim[0:-1]
 
 plt.figure()
-plt.hist(PC4,alpha=0.5)
-plt.hist(pc4Sims[0],alpha=0.5)
+plt.hist(PC1,alpha=0.5)
+plt.hist(pc1Sims[0],alpha=0.5)
 
 
 
@@ -1537,12 +1593,12 @@ plt.hist(pc4Sims[0],alpha=0.5)
 # plt.colorbar(pc1, ax=ax3)
 
 
-samplesPickle = 'swtSimulations5.pickle'
+samplesPickle = 'mwtSimulations.pickle'
 outputSamples = {}
 outputSamples['pc1Sims'] = pc1Sims
 outputSamples['pc2Sims'] = pc2Sims
 outputSamples['pc3Sims'] = pc3Sims
-outputSamples['pc4Sims'] = pc4Sims
+# outputSamples['pc4Sims'] = pc4Sims
 outputSamples['evbmus_sim'] = evbmus_sim
 outputSamples['dates_sim'] = dates_sim
 with open(samplesPickle,'wb') as f:

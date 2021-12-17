@@ -128,7 +128,7 @@ xds_MJO_fit = xr.Dataset(
     coords = {'time': [datetime(r[0],r[1],r[2]) for r in Dates.T]}
 )
 # reindex to daily data after 1979-01-01 (avoid NaN)
-xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1))
+xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1),datetime(2021,5,31))
 
 
 ##### AWT FROM ENSO SSTs
@@ -168,17 +168,26 @@ xds_MJO_fit = xr_daily(xds_MJO_fit, datetime(1979, 6, 1))
 #    PC2[indexDWT] = pc2Annual[indexAWT]*np.ones(len(indexDWT[0]))
 #    PC3[indexDWT] = pc3Annual[indexAWT]*np.ones(len(indexDWT[0]))
 
-with open(r"mwtPCs2.pickle", "rb") as input_file:
+with open(r"mwtPCs3.pickle", "rb") as input_file:
     historicalMWTs = pickle.load(input_file)
-dailyPC1 = historicalMWTs['dailyPC1']
-dailyPC2 = historicalMWTs['dailyPC2']
-dailyPC3 = historicalMWTs['dailyPC3']
-dailyPC4 = historicalMWTs['dailyPC4']
-dailyDates = historicalMWTs['dailyDates']
-awt_bmus = historicalMWTs['mwt_bmus']
-seasonalTime = historicalMWTs['seasonalTime']
-dailyMWT = historicalMWTs['dailyMWT']
-
+# dailyPC1 = historicalMWTs['dailyPC1']
+# dailyPC2 = historicalMWTs['dailyPC2']
+# dailyPC3 = historicalMWTs['dailyPC3']
+# dailyPC4 = historicalMWTs['dailyPC4']
+# dailyDates = historicalMWTs['dailyDates']
+# awt_bmus = historicalMWTs['mwt_bmus']
+# seasonalTime = historicalMWTs['seasonalTime']
+# dailyMWT = historicalMWTs['dailyMWT']
+# with open(r"mwtPCs3.pickle", "rb") as input_file:
+#     historicalMWTs = pickle.load(input_file)
+dailyPC1 = historicalMWTs['dailyPC1'][92:]
+dailyPC2 = historicalMWTs['dailyPC2'][92:]
+dailyPC3 = historicalMWTs['dailyPC3'][92:]
+dailyPC4 = historicalMWTs['dailyPC4'][92:]
+dailyDates = historicalMWTs['dailyDates'][92:]
+awt_bmus = historicalMWTs['mwt_bmus'][1:]
+seasonalTime = historicalMWTs['seasonalTime'][1:]
+dailyMWT = historicalMWTs['dailyMWT'][92:]
 
 # AWT: PCs (Generated with copula simulation. Annual data, parse to daily)
 xds_PCs_fit = xr.Dataset(
@@ -191,7 +200,7 @@ xds_PCs_fit = xr.Dataset(
     coords = {'time': [datetime(r[0],r[1],r[2]) for r in dailyDates]}
 )
 # reindex annual data to daily data
-xds_PCs_fit = xr_daily(xds_PCs_fit)
+xds_PCs_fit = xr_daily(xds_PCs_fit, datetime(1979,6,1),datetime(2021,5,31))
 
 
 ### NAO AS AN INDEX
@@ -273,6 +282,17 @@ cov_6 = cov_MJO.rmm2.values.reshape(-1,1)
 # join covars and norm.
 cov_T = np.hstack((cov_1, cov_2, cov_3, cov_4, cov_5, cov_6))
 
+
+cov_T_mean = np.mean(cov_T,axis=0)
+cov_T_std = np.std(cov_T,axis=0)
+#cov_T_std = np.array(cov_T_std[0])
+multCovT = np.array([0.31804979/0.31804979, 0.16031134/0.31804979, 0.12182678/0.31804979, 0.09111769/0.31804979, 1, 1])
+covTNorm = np.divide(np.subtract(cov_T,cov_T_mean),cov_T_std)
+covTNormalize = np.multiply(covTNorm,multCovT)
+
+# covTSimNorm = np.divide(np.subtract(cov_T_sim,cov_T_mean),cov_T_std)
+# covTSimNormalize = np.multiply(covTSimNorm,multCovT)
+
 # KMA related covars starting at KMA period
 i0 = d_covars_fit.index(x2d(xds_KMA_fit.time[0]))
 cov_KMA = cov_T[i0:,:]
@@ -282,7 +302,7 @@ d_covars_fit = d_covars_fit[i0:]
 cov_names = ['PC1', 'PC2', 'PC3', 'PC4', 'MJO1', 'MJO2']
 xds_cov_fit = xr.Dataset(
     {
-        'cov_values': (('time','cov_names'), cov_T),
+        'cov_values': (('time','cov_names'), covTNormalize),
     },
     coords = {
         'time': d_covars_fit,
@@ -309,16 +329,16 @@ xds_bmus_fit = xds_KMA_fit.sel(
 
 # Autoregressive logistic wrapper
 num_clusters = 70
-sim_num = 100
+sim_num = 10
 fit_and_save = True # False for loading
 p_test_ALR = '/media/dylananderson/Elements1/NC_climate/testALR/'
 
 # ALR terms
 d_terms_settings = {
     'mk_order'  : 2,
-    'constant' : True,
+    'constant' : False,
     'long_term' : False,
-    'seasonality': (True, [2, 4, 6]),
+    'seasonality': (True, [2, 4]),
     'covariates': (True, xds_cov_fit),
 }
 
@@ -360,7 +380,7 @@ dates_sim = dates_sim[0:-2]
 evbmus_sim = xds_ALR.evbmus_sims.values
 # evbmus_probcum = xds_ALR.evbmus_probcum.values
 
-p_mat_output = ('/media/dylananderson/Elements1/NC_climate/testALR/testWithMWT_y{0}s{1}.h5'.format(
+p_mat_output = ('/media/dylananderson/Elements1/NC_climate/testALR/testWithMWTNormed_y{0}s{1}.h5'.format(
         sim_years, sim_num))
 import h5py
 with h5py.File(p_mat_output, 'w') as hf:

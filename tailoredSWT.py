@@ -156,7 +156,7 @@ def axplot_WT_Probs(ax, wt_probs,
 
 # loading in a North Atlantic continuous SLP record without any of the memory built into it
 # SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_bigger.mat')
-SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
+SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
 # SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_bigger_area_rect.mat')
 
 X_in = SLPs['X_in']
@@ -248,21 +248,12 @@ dwtcolors = np.vstack((etcolors,tccolors[1:,:]))
 # bmus = bmus[120:]
 # SLPtime = SLPtime[151:]
 # PCs = PCs[151:,:]
-
-
-
-# bmus_dates = timeDWTs[28:,:]
-# bmus = bmus[28:]
-# SLPtime = SLPtime[59:]
-# PCs = PCs[59:,:]
-# bmus_dates_months = bmus_dates_months[28:]
-# bmus_dates_days = bmus_dates_days[28:]
-bmus_dates = timeDWTs
-bmus = bmus
-SLPtime = SLPtime[31:]
-PCs = PCs[31:,:]
-# bmus_dates_months = bmus_dates_months
-# bmus_dates_days = bmus_dates_days
+bmus_dates = timeDWTs[28:,:]
+bmus = bmus[28:]
+SLPtime = SLPtime[59:]
+PCs = PCs[59:,:]
+bmus_dates_months = bmus_dates_months[28:]
+bmus_dates_days = bmus_dates_days[28:]
 
 
 # SLPtime = SLPtime[120:]
@@ -280,32 +271,34 @@ DailySortedBmus = bmus
 #Dec/Jan/Feb
 #Mar/Apr/May
 
-# Monthly Time Series
-dt = date(1979, 2, 1)
-end = date(2021, 7, 1)
+dt = date(1979, 3, 1)
+end = date(2021, 6, 1)
 #step = datetime.timedelta(months=1)
-step = relativedelta(months=1)
+step = relativedelta(months=3)
 seasonalTime = []
 while dt < end:
     seasonalTime.append(dt)#.strftime('%Y-%m-%d'))
     dt += step
 
 
+s1season = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
 
-s1season = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
-
-for i in range(len(seasonalTime)-1):
+for i in range(len(seasonalTime)):
     sSeason = np.where((DailyDatesMatrix[:,0] == seasonalTime[i].year) & (DailyDatesMatrix[:,1] == seasonalTime[i].month) & (DailyDatesMatrix[:,2] == 1))
-    if i == 507:
+    if i == 168:
         ssSeason = np.where(
             (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (
-                        DailyDatesMatrix[:, 1] == (seasonalTime[i].month)) & (
+                        DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (
                     DailyDatesMatrix[:, 2] == 30))
     else:
-        if seasonalTime[i].month < 12:
-            ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month+1)) & (DailyDatesMatrix[:, 2] == 1))
+        if seasonalTime[i].month < 10:
+            ssSeason = np.where(
+                (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month+3)) & (
+                            DailyDatesMatrix[:, 2] == 1))
         else:
-            ssSeason = np.where((DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 2) & (DailyDatesMatrix[:, 2] == 1))
+            ssSeason = np.where(
+                (DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 3) & (
+                            DailyDatesMatrix[:, 2] == 1))
 
     for j in range(len(np.unique(DailySortedBmus))):
         s1season[j, i] = len(np.where(DailySortedBmus[sSeason[0][0]:ssSeason[0][-1]] == j)[0])
@@ -323,42 +316,31 @@ for i in range(len(seasonalTime)-1):
 
 
 
-PC1 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
-PC2 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
-PC3 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
-PC4 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
-PC5 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
-PC6 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)-1], np.nan)
+PC1 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
+PC2 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
+PC3 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
+PC4 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
+PC5 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
+PC6 = np.full([len(np.unique(DailySortedBmus)), len(seasonalTime)], np.nan)
 
 
 # June/June #!!!!
-for i in range(len(seasonalTime)-1):
-    # sSeason = np.where((DailyDatesMatrix[:,0] == seasonalTime[i].year) & (DailyDatesMatrix[:,1] == seasonalTime[i].month) & (DailyDatesMatrix[:,2] == 1))
-    # if i == 168:
-    #     ssSeason = np.where(
-    #         (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (
-    #                     DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (
-    #                 DailyDatesMatrix[:, 2] == 30))
-    # else:
-    #     if seasonalTime[i].month < 10:
-    #         ssSeason = np.where(
-    #             (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month+3)) & (
-    #                         DailyDatesMatrix[:, 2] == 1))
-    #     else:
-    #         ssSeason = np.where(
-    #             (DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 3) & (
-    #                         DailyDatesMatrix[:, 2] == 1))
+for i in range(len(seasonalTime)):
     sSeason = np.where((DailyDatesMatrix[:,0] == seasonalTime[i].year) & (DailyDatesMatrix[:,1] == seasonalTime[i].month) & (DailyDatesMatrix[:,2] == 1))
-    if i == 507:
+    if i == 168:
         ssSeason = np.where(
             (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (
-                        DailyDatesMatrix[:, 1] == (seasonalTime[i].month)) & (
+                        DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (
                     DailyDatesMatrix[:, 2] == 30))
     else:
-        if seasonalTime[i].month < 12:
-            ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month+1)) & (DailyDatesMatrix[:, 2] == 1))
+        if seasonalTime[i].month < 10:
+            ssSeason = np.where(
+                (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month+3)) & (
+                            DailyDatesMatrix[:, 2] == 1))
         else:
-            ssSeason = np.where((DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 2) & (DailyDatesMatrix[:, 2] == 1))
+            ssSeason = np.where(
+                (DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 3) & (
+                            DailyDatesMatrix[:, 2] == 1))
 
     for j in range(len(np.unique(DailySortedBmus))):
         yearlyBmus = DailySortedBmus[sSeason[0][0]:ssSeason[0][-1]]     # lets get the bmus for this year
@@ -392,18 +374,18 @@ normPC6 = np.divide(tempPC6,np.nanmax(tempPC6))*npercent[5]
 
 
 
-n_components = 3 # !!!!
+n_components = 4 # !!!!
 
 pcAggregates = np.full((len(normPC1),n_components),np.nan)
 pcAggregates[:,0] = normPC1
 pcAggregates[:,1] = normPC2
 pcAggregates[:,2] = normPC3
-# pcAggregates[:,3] = normPC4
+pcAggregates[:,3] = normPC4
 # pcAggregates[:,4] = normPC5
 # pcAggregates[:,5] = normPC6
 
 
-n_clusters = 12
+n_clusters = 9
 
 kmeans = KMeans(n_clusters, init='k-means++', random_state=100)  # 80
 
@@ -413,20 +395,13 @@ data = pcAggregates#[:, 0:n_components]
 
 awt_bmus = kmeans.fit_predict(data)
 
-groups = [len(np.where(kk==awt_bmus)[0]) for kk in np.arange(0,n_clusters)]
-print(groups)
-seasonalMonth = np.array([i.month for i in seasonalTime])
-
-monthNumber = [seasonalMonth[np.where(kk==awt_bmus)[0]] for kk in np.arange(0,n_clusters)]
-
-
 
 fig = plt.figure(figsize=[14, 9])
 gs2 = gridspec.GridSpec(n_components + 1, 1)
 for nn in range(n_components):
     ax2 = fig.add_subplot(gs2[nn])
     # ax2.plot(np.unique(DailyDatesMatrix[:,0])[:-1], pcAggregates[:, nn], 'k.-', linewidth=1.8, markersize=8)
-    ax2.plot(seasonalTime[0:-1], pcAggregates[:, nn], 'k.-', linewidth=1.8, markersize=8)
+    ax2.plot(seasonalTime, pcAggregates[:, nn], 'k.-', linewidth=1.8, markersize=8)
 
     ax2.set_ylabel('PC-' + str(nn + 1), fontsize=13)
     ax2.grid('minor')
@@ -434,7 +409,7 @@ for nn in range(n_components):
 
 ax2 = fig.add_subplot(gs2[nn + 1])
 # ax2.plot(np.unique(DailyDatesMatrix[:,0])[:-1], awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
-ax2.plot(seasonalTime[0:-1], awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
+ax2.plot(seasonalTime, awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
 
 
 
@@ -447,41 +422,30 @@ dailyAWT = np.ones((len(DailySortedBmus),))
 dailyPC1 = np.ones((len(DailySortedBmus),))
 dailyPC2 = np.ones((len(DailySortedBmus),))
 dailyPC3 = np.ones((len(DailySortedBmus),))
-# dailyPC4 = np.ones((len(DailySortedBmus),))
+dailyPC4 = np.ones((len(DailySortedBmus),))
 
 for i in range(len(awt_bmus)):
-    # sSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == seasonalTime[i].month) & (DailyDatesMatrix[:, 2] == 1))
-    # if i == 168:
-    #     ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (DailyDatesMatrix[:, 2] == 31))
-    # else:
-    #     if seasonalTime[i].month < 10:
-    #         ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 3)) & (DailyDatesMatrix[:, 2] == 1))
-    #     else:
-    #         ssSeason = np.where((DailyDatesMatrix[:, 0] == (seasonalTime[i].year + 1)) & (DailyDatesMatrix[:, 1] == 3) & (DailyDatesMatrix[:, 2] == 1))
-    sSeason = np.where((DailyDatesMatrix[:,0] == seasonalTime[i].year) & (DailyDatesMatrix[:,1] == seasonalTime[i].month) & (DailyDatesMatrix[:,2] == 1))
-    if i == 507:
-        ssSeason = np.where(
-            (DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (
-                        DailyDatesMatrix[:, 1] == (seasonalTime[i].month)) & (
-                    DailyDatesMatrix[:, 2] == 30))
+    sSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == seasonalTime[i].month) & (DailyDatesMatrix[:, 2] == 1))
+    if i == 168:
+        ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 2)) & (DailyDatesMatrix[:, 2] == 31))
     else:
-        if seasonalTime[i].month < 12:
-            ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month+1)) & (DailyDatesMatrix[:, 2] == 1))
+        if seasonalTime[i].month < 10:
+            ssSeason = np.where((DailyDatesMatrix[:, 0] == seasonalTime[i].year) & (DailyDatesMatrix[:, 1] == (seasonalTime[i].month + 3)) & (DailyDatesMatrix[:, 2] == 1))
         else:
-            ssSeason = np.where((DailyDatesMatrix[:, 0] == (seasonalTime[i].year+1)) & (DailyDatesMatrix[:, 1] == 2) & (DailyDatesMatrix[:, 2] == 1))
+            ssSeason = np.where((DailyDatesMatrix[:, 0] == (seasonalTime[i].year + 1)) & (DailyDatesMatrix[:, 1] == 3) & (DailyDatesMatrix[:, 2] == 1))
 
     dailyAWT[sSeason[0][0]:ssSeason[0][0]+1] = awt_bmus[i]*dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]
     dailyPC1[sSeason[0][0]:ssSeason[0][0]+1] = normPC1[i]*np.ones(len(dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]),)
     dailyPC2[sSeason[0][0]:ssSeason[0][0]+1] = normPC2[i]*np.ones(len(dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]),)
     dailyPC3[sSeason[0][0]:ssSeason[0][0]+1] = normPC3[i]*np.ones(len(dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]),)
-    # dailyPC4[sSeason[0][0]:ssSeason[0][0]+1] = normPC4[i]*np.ones(len(dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]),)
+    dailyPC4[sSeason[0][0]:ssSeason[0][0]+1] = normPC4[i]*np.ones(len(dailyAWT[sSeason[0][0]:ssSeason[0][0]+1]),)
 
 
 
-awtSLPs = SLP[0:,:]/100 - np.mean(SLP[0:,:],axis=0)/100
+awtSLPs = SLP[30:,:]/100 - np.mean(SLP[30:,:],axis=0)/100
 fig = plt.figure(figsize=(10, 6))
 
-gs1 = gridspec.GridSpec(4, 4)
+gs1 = gridspec.GridSpec(3, 3)
 gs1.update(wspace=0.00, hspace=0.00) # set the spacing between axes.
 for i in range(len(np.unique(awt_bmus))):
 
@@ -521,10 +485,10 @@ for i in range(len(np.unique(awt_bmus))):
     cbar.set_clim(-9.0, 9.0)
 
 
-asdfg
+
 
 fig10 = plt.figure()
-gs = gridspec.GridSpec(4, 4, wspace=0.1, hspace=0.15)
+gs = gridspec.GridSpec(3, 3, wspace=0.1, hspace=0.15)
 
 for i in range(len(np.unique(awt_bmus))):
     ax = plt.subplot(gs[i])
@@ -781,7 +745,7 @@ asdfg
 
 import pickle
 
-mwtPickle = 'monthlywtPCs.pickle'
+mwtPickle = 'mwtPCs3.pickle'
 outputMWTs = {}
 outputMWTs['PC1'] = normPC1
 outputMWTs['PC2'] = normPC2
@@ -794,7 +758,7 @@ outputMWTs['dailyDates'] = bmus_dates
 outputMWTs['dailyPC1'] = dailyPC1
 outputMWTs['dailyPC2'] = dailyPC2
 outputMWTs['dailyPC3'] = dailyPC3
-# outputMWTs['dailyPC4'] = dailyPC4
+outputMWTs['dailyPC4'] = dailyPC4
 outputMWTs['nPercent'] = nPercent
 
 
