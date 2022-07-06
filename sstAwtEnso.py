@@ -418,13 +418,13 @@ def Plot_AWTs_Dates(bmus, dates, n_clusters, show=True):
             axs[ic], dates_AWT, bmus_AWT,
             clr, xaxis_clean, ylabel, xlims
         )
-
+        #axs[ic].set_xticks(dates_AWT)
     # show and return figure
     if show: plt.show()
     return fig
 
 
-data_folder="/media/dylananderson/Elements/shusin6_contents/AWT/ERSSTV5/"
+data_folder="/media/dylananderson/Elements1/shusin6_contents/AWT/ERSSTV5/"
 
 
 years = np.arange(1880,2022)

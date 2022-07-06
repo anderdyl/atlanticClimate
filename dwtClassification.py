@@ -459,6 +459,11 @@ SLPs2 = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_
 X_in2 = SLPs2['X_in']
 Y_in2 = SLPs2['Y_in']
 
+
+
+asdfg
+
+
 # plotting the EOF patterns
 fig2 = plt.figure(figsize=(10,10))
 gs1 = gridspec.GridSpec(7, 7)
@@ -523,6 +528,8 @@ for hh in range(num_clusters):
     else:
         plotIndy = 0
         plotIndx = plotIndx + 1
+
+
 #
 # ax = plt.subplot(gs1[36])
 # m = Basemap(projection='merc',llcrnrlat=-10,urcrnrlat=70,llcrnrlon=255,urcrnrlon=365,lat_ts=10,resolution='c')

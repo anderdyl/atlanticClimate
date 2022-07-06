@@ -305,7 +305,6 @@ print('Chain size: {0} distinct bmu pairs.'.format(len(chain4)))
 
 
 
-asdfg
 
 # r = random.randint(0, len(mwt_bmus) - 1)
 # key = (mwt_bmus[r], mwt_bmus[r + 1])
@@ -331,20 +330,7 @@ asdfg
 #         bmu_sim.append(w)
 #         key = (key[1], key[2], w)
 #     evbmus_sim[gg,:] = bmu_sim
-
-sim_num = 100
 sim_years = 100
-evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12+1)))
-key = (3, 3, 5, 5)
-for gg in range(sim_num):
-    bmu_sim = [3, 3, 5, 5]
-    while len(bmu_sim) < (sim_years*12+1):
-        w = random.choice(chain4[key])
-        bmu_sim.append(w)
-        key = (key[1], key[2], key[3], w)
-    evbmus_sim[gg,:] = bmu_sim
-
-
 # start simulation at PCs available data
 d1 = datetime(2022,6,1)#x2d(xds_cov_fit.time[0])
 d2 = datetime(2022+int(sim_years),6,1)#datetime(d1.year+sim_years, d1.month, d1.day)
@@ -356,6 +342,269 @@ dates_sim = []
 while dt < end:
     dates_sim.append(dt)#.strftime('%Y-%m-%d'))
     dt += step
+
+
+groups = [len(np.where(kk==mwt_bmus)[0]) for kk in np.unique(mwt_bmus)]
+print(groups)
+seasonalMonth = np.array([i.month for i in seasonalTime])
+
+monthNumber = [seasonalMonth[np.where(kk==mwt_bmus)[0]] for kk in np.unique(mwt_bmus)]
+
+mwtByMonth = [mwt_bmus[np.where(kk==seasonalMonth[0:-1])[0]]for kk in np.unique(seasonalMonth)]
+
+seasonalMonthSim = np.array([i.month for i in dates_sim])
+
+sim_num = 1
+#
+# evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12+1)))
+# key = (3, 3, 5, 5)
+# for gg in range(sim_num):
+#     bmu_sim = [3, 3, 5, 5]
+#     c = 4
+#     while len(bmu_sim) < (sim_years*12):
+#         w = random.choice(chain4[key])
+#         if w not in mwtByMonth[seasonalMonthSim[c]-1]:
+#             print('1st attempt to put a {} in a {}'.format(w,seasonalMonthSim[c]))#tried to predict a month outside of reality')
+#             w = random.choice(chain4[key])
+#             if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                 print('2nd attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                     c]))  # tried to predict a month outside of reality')
+#                 w = random.choice(chain4[key])
+#                 if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                     print('3rd attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                         c]))  # tried to predict a month outside of reality')
+#                     w = random.choice(chain4[key])
+#                     if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                         print('4th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                             c]))  # tried to predict a month outside of reality')
+#                         w = random.choice(chain4[key])
+#                         if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                             print('5th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                                 c]))  # tried to predict a month outside of reality')
+#                             w = random.choice(chain4[key])
+#                             if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                                 print('6th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                                     c]))  # tried to predict a month outside of reality')
+#                                 w = random.choice(chain4[key])
+#                             else:
+#                                 w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                 keyTest = (key[1], key[2], key[3], w)
+#                                 print('Had to make a random selection from the correct month')
+#                                 if keyTest not in chain4:
+#                                     print('But the created chain was not previously observed')
+#                                     w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                     keyTest = (key[1], key[2], key[3], w)
+#                                     print('Had to try again')
+#                                     if keyTest not in chain4:
+#                                         print('But still could not find a fit')
+#                                     else:
+#                                         bmu_sim.append(w)
+#                                 else:
+#                                     bmu_sim.append(w)
+#
+#                         else:
+#                             bmu_sim.append(w)
+#                     else:
+#                         bmu_sim.append(w)
+#                 else:
+#                     bmu_sim.append(w)
+#             else:
+#                 bmu_sim.append(w)
+#         else:
+#             bmu_sim.append(w)
+#         key = (key[1], key[2], key[3], w)
+#         c = c+1
+#     evbmus_sim[gg,:] = bmu_sim
+#
+
+
+#
+# evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12+1)))
+# key = (3, 3, 5)
+# for gg in range(sim_num):
+#     bmu_sim = [3, 3, 5]
+#     c = 3
+#     while len(bmu_sim) < (sim_years*12):
+#         w = random.choice(chain3[key])
+#         if w not in mwtByMonth[seasonalMonthSim[c]-1]:
+#             print('1st attempt to put a {} in a {}'.format(w,seasonalMonthSim[c]))#tried to predict a month outside of reality')
+#             w = random.choice(chain3[key])
+#             if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                 print('2nd attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                     c]))  # tried to predict a month outside of reality')
+#                 w = random.choice(chain3[key])
+#                 if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                     print('3rd attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                         c]))  # tried to predict a month outside of reality')
+#                     w = random.choice(chain3[key])
+#                     if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                         print('4th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                             c]))  # tried to predict a month outside of reality')
+#                         w = random.choice(chain3[key])
+#                         if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                             print('5th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                                 c]))  # tried to predict a month outside of reality')
+#                             w = random.choice(chain3[key])
+#                             if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                                 print('6th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                                     c]))  # tried to predict a month outside of reality')
+#                                 w = random.choice(chain3[key])
+#                                 if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                                     w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                     keyTest = (key[1], key[2], w)
+#                                     print('Had to make a random selection from the correct month')
+#                                     if keyTest not in chain3:
+#                                         print('But the created chain was not previously observed')
+#                                         w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                         keyTest = (key[1], key[2], w)
+#                                         #print('Had to try again')
+#                                         if keyTest not in chain3:
+#                                             print('But still could not find a fit')
+#                                             w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                             keyTest = (key[1], key[2], w)
+#                                             bmu_sim.append(w)
+#                                         else:
+#                                             bmu_sim.append(w)
+#                                     else:
+#                                         bmu_sim.append(w)
+#                                 else:
+#                                     bmu_sim.append(w)
+#                             else:
+#
+#                                 bmu_sim.append(w)
+#                         else:
+#                             bmu_sim.append(w)
+#                     else:
+#                         bmu_sim.append(w)
+#                 else:
+#                     bmu_sim.append(w)
+#             else:
+#                 bmu_sim.append(w)
+#         else:
+#             bmu_sim.append(w)
+#         key = (key[1], key[2], w)
+#         c = c+1
+#     evbmus_sim[gg,:] = bmu_sim
+#
+
+sim_num = 100
+evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12+1)))
+key = (3, 3)
+for gg in range(sim_num):
+    bmu_sim = [3, 3]
+    c = 2
+    while len(bmu_sim) < (sim_years*12+1):
+        w = random.choice(chain[key])
+        temp = chain[key]
+        counter = 0
+        while w not in mwtByMonth[seasonalMonthSim[c]-1]:
+            print('stuck trying to put {} in {}'.format(w,seasonalMonthSim[c]))
+            counter = counter + 1
+            if counter < 20:
+                w = random.choice(chain[key])
+            else:
+                newW = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+                newWminus1 = random.choice(mwtByMonth[seasonalMonthSim[c] - 2])
+                key = (newWminus1,newW)
+                w = newW
+        bmu_sim.append(w)
+        key = (key[1], w)
+        c = c + 1
+    evbmus_sim[gg, :] = bmu_sim
+
+
+
+#
+# evbmus_sim = np.nan*np.ones((sim_num,(sim_years*12)))
+# key = (3, 3)
+# for gg in range(sim_num):
+#     bmu_sim = [3, 3]
+#     c = 2
+#     while len(bmu_sim) < (sim_years*12):
+#         w = random.choice(chain[key])
+#         if w not in mwtByMonth[seasonalMonthSim[c]-1]:
+#             print('1st attempt to put a {} in a {}'.format(w,seasonalMonthSim[c]))#tried to predict a month outside of reality')
+#             w = random.choice(chain[key])
+#             if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                 print('2nd attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                     c]))  # tried to predict a month outside of reality')
+#                 w = random.choice(chain[key])
+#                 if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                     print('3rd attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                         c]))  # tried to predict a month outside of reality')
+#                     w = random.choice(chain[key])
+#                     if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                         print('4th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                             c]))  # tried to predict a month outside of reality')
+#                         w = random.choice(chain[key])
+#                         if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                             print('5th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                                 c]))  # tried to predict a month outside of reality')
+#                             w = random.choice(chain[key])
+#                             if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                                 print('6th attempt to put a {} in a {}'.format(w, seasonalMonthSim[
+#                                     c]))  # tried to predict a month outside of reality')
+#                                 w = random.choice(chain[key])
+#                                 if w not in mwtByMonth[seasonalMonthSim[c] - 1]:
+#                                     w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                     keyTest = (key[1], w)
+#                                     print('Had to make a random selection from the correct month')
+#                                     if keyTest not in chain:
+#                                         print('But the created chain was not previously observed')
+#                                         w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                         keyTest = (key[1], w)
+#                                         #print('Had to try again')
+#                                         if keyTest not in chain:
+#                                             print('But still could not find a fit')
+#                                             w = random.choice(mwtByMonth[seasonalMonthSim[c] - 1])
+#                                             keyTest = (key[1], w)
+#                                             bmu_sim.append(w)
+#                                         else:
+#                                             bmu_sim.append(w)
+#                                     else:
+#                                         bmu_sim.append(w)
+#                                 else:
+#                                     bmu_sim.append(w)
+#                             else:
+#
+#                                 bmu_sim.append(w)
+#                         else:
+#                             bmu_sim.append(w)
+#                     else:
+#                         bmu_sim.append(w)
+#                 else:
+#                     bmu_sim.append(w)
+#             else:
+#                 bmu_sim.append(w)
+#         else:
+#             bmu_sim.append(w)
+#         key = (key[1], w)
+#         c = c+1
+#     evbmus_sim[gg,:] = bmu_sim
+#
+#
+
+
+
+
+
+
+
+
+
+
+###### NEED TO CHECK ON WHETHER THE MARKOV HAS PUT MONTHS WHERE IT SHOULDN'T
+
+temp = evbmus_sim[0,:]
+
+
+mwtByMonthSim = [temp[np.where(kk==seasonalMonthSim)[0]]for kk in np.unique(seasonalMonthSim)]
+
+for hh in np.unique(mwt_bmus):
+    for qq in mwtByMonthSim[hh]:
+        if qq not in mwtByMonth[hh]:
+            print('shit, theres a {} that should not be in {}'.format(qq,hh))
+
 
 #
 # T = mwt_bmus

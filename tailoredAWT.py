@@ -91,7 +91,7 @@ def dt2cal(dt):
 
 # loading in a North Atlantic continuous SLP record without any of the memory built into it
 # SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_bigger.mat')
-SLPs = ReadMatfile('/media/dylananderson/Elements1/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
+SLPs = ReadMatfile('/media/dylananderson/Elements/NC_climate/NorthAtlanticSLPs_June2021_ESTELA_area_smaller.mat')
 
 X_in = SLPs['X_in']
 Y_in = SLPs['Y_in']
@@ -247,18 +247,23 @@ pcAggregates[:,4] = normPC5
 
 
 
-n_clusters = 6
+n_clusters = 5
 
 kmeans = KMeans(n_clusters, init='k-means++', random_state=100)  # 80
 
-n_components = 5 # !!!!
+n_components = 4 # !!!!
 data = pcAggregates#[:, 0:n_components]
 
 #    data1=data/np.std(data,axis=0)
 
 awt_bmus = kmeans.fit_predict(data)
 
-
+# BMUs = np.nan*np.ones((len(awt_bmus),))
+# order = np.array([1,2,5,4,3])-1
+#
+# for hh in np.unique(awt_bmus):
+#     ind = np.where(awt_bmus==order[hh])
+#     BMUs[ind] = hh*np.ones(len(ind),)
 
 fig = plt.figure(figsize=[14, 9])
 gs2 = gridspec.GridSpec(n_components + 1, 1)
@@ -272,8 +277,9 @@ for nn in range(n_components):
 
 ax2 = fig.add_subplot(gs2[nn + 1])
 ax2.plot(np.unique(DailyDatesMatrix[:,0])[:-1], awt_bmus + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
-
-
+# ax2.plot(np.unique(DailyDatesMatrix[:,0])[:-1], BMUs + 1, 'k.:', linewidth=1.8, markersize=10, color='grey')
+ax2.set_xticks(np.unique(DailyDatesMatrix[:,0])[:-1])
+ax2.set_xticklabels(ax2.get_xticks(), rotation = 45)
 
 
 dailyAWT = np.ones((len(DailySortedBmus),))
